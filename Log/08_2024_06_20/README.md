@@ -4,7 +4,9 @@
 
 ### 2.  確定特徵值:
 
-   1.  _MACD指標 (指數平滑異同移動平均線):_ 透過計算「收盤時股價或指數變化的指數移動平均值（ EMA ）」之間的離差程度（ DIF ）而來，用來確定波段漲幅並找到買賣點。
+   1.  MACD指標 (指數平滑異同移動平均線):----->[參考網址](https://www.cmoney.tw/learn/course/technicals/topic/750) 
+   
+   透過計算「收盤時股價或指數變化的指數移動平均值（ EMA ）」之間的離差程度（ DIF ）而來，用來確定波段漲幅並找到買賣點。
 
       MACD 指標組成介紹:指數平滑移動平均線（ EMA ）、離差值（ DIF ）
 
@@ -19,7 +21,9 @@
 
       
 
-   * _MA線 (移動平均線):_ 移動平均線代表的是一種算術平均線，把一段時間周期內的價格相加，除以週期頻率。
+   * MA線 (移動平均線):----->[參考網址](https://rich01.com/what-is-moving-average-line/)
+
+    移動平均線代表的是一種算術平均線，把一段時間周期內的價格相加，除以週期頻率。
 
       __公式: 移動平均線 = 將N天的收盤價加總後再除以N，即得到第N天的算術平均線數值。__
 
@@ -42,7 +46,9 @@
         240日線 (也稱為年線，240交易日接近一年，也有人用252交易日更加接近一年)
 
 
-   2.  _RSI指標 (相對強弱指標):_ 藉由計算一段期間內股價的漲跌變化，判斷最近的趨勢屬於偏強 (偏多) 還是偏弱 (偏空)。
+   2.  RSI指標 (相對強弱指標):----->[參考網址](https://rich01.com/what-is-moving-average-line/)
+
+    藉由計算一段期間內股價的漲跌變化，判斷最近的趨勢屬於偏強 (偏多) 還是偏弱 (偏空)。
 
      __公式: (A/A+B) *100__
 
@@ -57,7 +63,7 @@
      RSI值<20，代表市場過冷，股價或許已跌到谷底且交投低迷，可能會反轉為上漲趨勢，或短線反彈機會增加。
 
 
-   3. [Bollinger Band (布林通道):](https://www.oanda.com/bvi-ft/lab-education/technical_analysis/bollinger_bands/)
+   3. Bollinger Band (布林通道):----->[參考網址](https://www.oanda.com/bvi-ft/lab-education/technical_analysis/bollinger_bands/)
    
     金融市場中用於判斷價格「進、出場時機」的技術指標，在納入平均值、標準差的概念之後，進而找出市場的價格突破點、反轉點之指標。
 
@@ -73,5 +79,5 @@
      * 上軌 = 股價的壓力線
      * 下軌 = 股價的支撐線
 
-   4.[支撐和阻力的基本原理](https://academy.binance.com/zt/articles/the-basics-of-support-and-resistance-explained)
+   4.支撐和阻力的基本原理----->[參考網址](https://academy.binance.com/zt/articles/the-basics-of-support-and-resistance-explained)
 
