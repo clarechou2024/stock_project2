@@ -46,7 +46,7 @@
         240日線 (也稱為年線，240交易日接近一年，也有人用252交易日更加接近一年)
 
 
-   2.  RSI指標 (相對強弱指標):----->[參考網址](https://rich01.com/what-is-moving-average-line/)
+   2.  RSI指標 (相對強弱指標):----->[參考網址](https://www.oanda.com/bvi-ft/lab-education/technical_analysis/what_is_rsi/)
 
     藉由計算一段期間內股價的漲跌變化，判斷最近的趨勢屬於偏強 (偏多) 還是偏弱 (偏空)。
 
