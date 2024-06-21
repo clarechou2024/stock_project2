@@ -2,6 +2,8 @@ import data_loading as rdata
 import datas
 from datas import Data
 import datetime
+import Relative
+import Moving_Average
 import pandas as pd
 
 def main():
@@ -15,7 +17,15 @@ def main():
     data:Data=Data.model_validate(data_list)
     stock_datas:list[dict]=data.model_dump()
 
+    window_size=10
+    sma = Moving_Average.Calculate_Moving_Average(month_datas, window_size=window_size)
 
+    rsi= Relative.calculate_rsi(month_datas)
+    
+    month_datas['sma']=sma
+    month_datas['rsi']=rsi
+
+    print(month_datas)
     
 if __name__ =="__main__":
     main()

@@ -1,6 +1,6 @@
 import pandas as pd
 
-def calculate_rsi(data:pd.DataFrame, window=14)->pd.Series:
+def calculate_rsi(data:pd.DataFrame, window=14)->pd.DataFrame:
     """
     Calculate RSI (Relative Strength Index) for given data.
     
