@@ -5,6 +5,7 @@ import datetime
 import Relative
 import Moving_Average
 import pandas as pd
+import bollinger
 
 def main():
     month_num=6
@@ -17,13 +18,16 @@ def main():
     data:Data=Data.model_validate(data_list)
     stock_datas:list[dict]=data.model_dump()
 
-    window_size=10
-    sma = Moving_Average.Calculate_Moving_Average(month_datas, window_size=window_size)
+    window=20
+    sma:pd.Series = Moving_Average.Calculate_Moving_Average(data=month_datas, window=window)
 
-    rsi= Relative.calculate_rsi(month_datas)
+    rsi:pd.Series= Relative.calculate_rsi(data=month_datas,window=window)
     
     month_datas['sma']=sma
     month_datas['rsi']=rsi
+
+    num_std=2
+    month_datas:pd.DataFrame=bollinger.calculate_bollinger_bands(data=month_datas,window=window,num_std=num_std)
 
     print(month_datas)
     
