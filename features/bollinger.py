@@ -1,6 +1,6 @@
 import pandas as pd
 
-def calculate_bollinger_bands(data: pd.DataFrame, window=20, num_std=2)->pd.DataFrame:
+def Calculate_Bollinger_Bands(data: pd.DataFrame, window=20, num_std=2)->pd.DataFrame:
     # 計算移動平均線
     data['MA'] = data['收盤價'].rolling(window=window).mean()
     
