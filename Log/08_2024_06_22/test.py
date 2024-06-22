@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 
+
 # 下載股票數據
 ticker = 'AAPL'  # 這裡使用蘋果公司（AAPL）作為例子
 start_date = '2020-01-01'
