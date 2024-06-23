@@ -1,6 +1,6 @@
 import pandas as pd
 
-def Calculate_Rsi(data:pd.DataFrame, window=14)->pd.Series:
+def Calculate_Rsi(data:pd.DataFrame, window=14)->pd.DataFrame:
     """
     Calculate RSI (Relative Strength Index) for given data.
     
@@ -17,7 +17,11 @@ def Calculate_Rsi(data:pd.DataFrame, window=14)->pd.Series:
     loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
     
     rs = gain / loss
-    rsi = 100 - (100 / (1 + rs))
+    rsi = round(100 - (100 / (1 + rs)),4)
     
-    return rsi
+    data['rsi']=rsi
+    close_mean:pd.Series=data['收盤價'].astype(float).mean()
+    data['rsi']=data['rsi'].fillna(round(close_mean,4))
+
+    return data
 

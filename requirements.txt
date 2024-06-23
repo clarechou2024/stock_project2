@@ -1,3 +1,7 @@
 requests
-pandas
 pydantic
+pandas
+numpy
+ttkthemes
+tkintermapview
+matplotlib
