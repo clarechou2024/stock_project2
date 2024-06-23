@@ -1,7 +1,15 @@
+import os
 import requests
 import datetime as dt # 時間套件
 import pandas as pd
 from dateutil.relativedelta import relativedelta
+
+def Check_Data_Csv():
+    if os.path.exists("data.csv"):
+        print("檔案存在")
+        return True
+    else:
+        return False
 
 def Get_N_Month_Data(month_num:int,stock_id:int) ->pd.DataFrame:
 # 當日時間
