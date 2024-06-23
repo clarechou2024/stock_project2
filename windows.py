@@ -13,6 +13,8 @@ import pandas as pd
 from numpy import random    #亂數產生
 import numpy as np       #數學處理
 import matplotlib.pyplot as plt #繪圖
+import seaborn as sns
+
 class Window(tkinter.Tk):
     def __init__(self):
         self._stock_id:int=0
@@ -53,12 +55,25 @@ class Window(tkinter.Tk):
         #左-------------------------------------------------------------------------------------------
 
         #右-------------------------------------------------------------------------------------------
-        self.right_frame=ttk.Frame(main_frame)
-        #right_frame的設定
+        self.right_frame = ttk.Frame(main_frame, style="Right.TFrame")
         self.right_frame.grid_rowconfigure(0, weight=1)
         self.right_frame.grid_columnconfigure(0, weight=1)
 
-        self.right_frame.grid(row=0,column=1,sticky="nsew")
+        canvas = tkinter.Canvas(self.right_frame)
+        canvas.grid(row=0, column=0, sticky="nsew")
+
+        scrollbarx = ttk.Scrollbar(self.right_frame, orient="horizontal", command=canvas.xview)
+        scrollbary = ttk.Scrollbar(self.right_frame, orient="vertical", command=canvas.yview)
+        scrollbarx.grid(row=1, column=0, sticky="ew")
+        scrollbary.grid(row=0, column=1, sticky="ns")
+        canvas.configure(xscrollcommand=scrollbarx.set,yscrollcommand=scrollbary.set)
+
+        self.scrollable_frame = ttk.Frame(canvas)
+        self.scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+        canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        
+        self.right_frame.grid(row=0, column=1, sticky="nsew")
         #右-------------------------------------------------------------------------------------------
         main_frame.pack(fill="both", expand=True)
     
@@ -105,21 +120,39 @@ class Window(tkinter.Tk):
         # 將 month_datas 寫入 data.csv
         month_datas.to_csv('data.csv', index=False)
 
-        self.plot_features()
 
 
-    def plot_features(self):
-            for widget in self.right_frame.winfo_children():
-                widget.destroy()
+        self.boxplot_features()
+        self.distplot__features()
 
-            features = ['upperband', 'lowerband']
-            for i, fea in enumerate(features):
-                fig, ax = plt.subplots(figsize=(6, 4))
-                ax.boxplot(self._stock_data[fea], showmeans=True)
-                ax.set_title(fea)
-                
-                canvas = FigureCanvasTkAgg(fig, master=self.right_frame)
-                canvas.draw()
-                canvas.get_tk_widget().grid(row=0, column=i, sticky="nsew")
-                self.right_frame.grid_columnconfigure(i, weight=1)
+    def boxplot_features(self):
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+
+        features = ['ma','std_dev','upperband', 'lowerband']
+        for i, fea in enumerate(features):
+            fig, ax = plt.subplots(figsize=(6, 4))
+            ax.boxplot(self._stock_data[fea], showmeans=True)
+            ax.set_title(fea)
+
+            canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
+            canvas.draw()
+            canvas.get_tk_widget().grid(row=0, column=i, sticky="nsew")
+            self.scrollable_frame.grid_columnconfigure(i, weight=1)
+
+    def distplot__features(self):
+
+        features = ['ma','std_dev','upperband', 'lowerband']
+        for i, fea in enumerate(features):
+            fig, ax = plt.subplots(figsize=(6, 4))
+            sns.distplot(self._stock_data[fea], ax=ax, hist=True, kde=True, rug=False, bins=20,
+                         hist_kws={'edgecolor': 'black'}, kde_kws={'linewidth': 2})
+            ax.set_title(fea)
+
+            canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
+            canvas.draw()
+            canvas.get_tk_widget().grid(row=1, column=i, sticky="nsew")
+            self.scrollable_frame.grid_rowconfigure(i, weight=1)
+
+
         
