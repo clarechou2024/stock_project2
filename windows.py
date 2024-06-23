@@ -21,7 +21,7 @@ class Window(tkinter.Tk):
         self._stock_data:pd.DataFrame=None
         super().__init__()
         self.title("stock window")
-        self.geometry("600x400")
+        self.geometry("800x600")
 
         style = ttk.Style()
         style.configure("LeftTop.TFrame", background="lightblue")
