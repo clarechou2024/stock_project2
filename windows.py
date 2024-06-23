@@ -19,6 +19,8 @@ class Window(tkinter.Tk):
     def __init__(self):
         self._stock_id:int=0
         self._stock_data:pd.DataFrame=None
+        self._stock_features:list=[]
+
         super().__init__()
         self.title("stock window")
         self.geometry("800x600")
@@ -41,15 +43,17 @@ class Window(tkinter.Tk):
         left_frame.grid_columnconfigure(0, weight=1)
 
         left_top_frame = ttk.Frame(left_frame, style="LeftTop.TFrame")
+
         self.stock_id_var = tkinter.StringVar()
         ttk.Label(left_top_frame, text="stock_id").grid(row=0,column=0,padx=(10,10),pady=(10,10))
         ttk.Entry(left_top_frame, textvariable=self.stock_id_var).grid(row=0,column=1,padx=(10,10),pady=(10,10))
         ttk.Button(left_top_frame,text="送出",command=self.update_stock_id).grid(row=1,column=1,sticky="se")
+
         left_top_frame.grid(row=0, column=0, sticky="nsew")
 
-        left_bottom_frame = ttk.Frame(left_frame, style="LeftBottom.TFrame")
-        ttk.Label(left_bottom_frame, text="Left Bottom Frame").pack()
-        left_bottom_frame.grid(row=1, column=0, sticky="nsew")
+        self.left_bottom_frame = ttk.Frame(left_frame, style="LeftBottom.TFrame")
+
+        self.left_bottom_frame.grid(row=1, column=0, sticky="nsew")
 
         left_frame.grid(row=0,column=0,sticky="nsew")
         #左-------------------------------------------------------------------------------------------
@@ -121,16 +125,39 @@ class Window(tkinter.Tk):
         month_datas.to_csv('data.csv', index=False)
 
 
-
+        self.create_checkbuttons()
         self.boxplot_features()
-        self.distplot__features()
+        self.distplot_features()
 
+    def create_checkbuttons(self):
+        for widget in self.left_bottom_frame.winfo_children():
+            widget.destroy()
+
+        check_vars = []
+        features = self._stock_data.keys()
+        for i, feature in enumerate(features):
+            var = tkinter.BooleanVar()
+            checkbutton = ttk.Checkbutton(self.left_bottom_frame, text=feature, variable=var)
+            checkbutton.grid(row=i, column=0, sticky="w")
+            check_vars.append((feature,var))
+
+        ttk.Button(self.left_bottom_frame,text="確認",command=self.choosen_features).grid(row=len(features), column=0, sticky="w")
+
+        self._stock_features=check_vars
+
+    def choosen_features(self):
+        self.boxplot_features()
+        self.distplot_features()
+
+    def get_selected_features(self):
+        return [feature for feature, var in self._stock_features if var.get()]
+
+    #畫盒鬚圖
     def boxplot_features(self):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
-
-        features = ['ma','std_dev','upperband', 'lowerband']
-        for i, fea in enumerate(features):
+        selected_features = self.get_selected_features()
+        for i, fea in enumerate(selected_features):
             fig, ax = plt.subplots(figsize=(6, 4))
             ax.boxplot(self._stock_data[fea], showmeans=True)
             ax.set_title(fea)
@@ -140,10 +167,10 @@ class Window(tkinter.Tk):
             canvas.get_tk_widget().grid(row=0, column=i, sticky="nsew")
             self.scrollable_frame.grid_columnconfigure(i, weight=1)
 
-    def distplot__features(self):
-
-        features = ['ma','std_dev','upperband', 'lowerband']
-        for i, fea in enumerate(features):
+    #畫常態圖
+    def distplot_features(self):
+        selected_features = self.get_selected_features()
+        for i, fea in enumerate(selected_features):
             fig, ax = plt.subplots(figsize=(6, 4))
             sns.distplot(self._stock_data[fea], ax=ax, hist=True, kde=True, rug=False, bins=20,
                          hist_kws={'edgecolor': 'black'}, kde_kws={'linewidth': 2})
