@@ -5,8 +5,8 @@ import yfinance as yf
 
 # 下載股票數據
 ticker = 'AAPL'  # 這裡使用蘋果公司（AAPL）作為例子
-start_date = '2020-01-01'
-end_date = '2023-12-01'
+start_date = '2008-01-01'
+end_date = '2023-12-31'
 data = yf.download(ticker, start=start_date, end=end_date)
 
 # 計算MACD指標的函數
@@ -23,3 +23,5 @@ data = calculate_macd(data)
 
 # 打印出計算後的數據，這裡只打印最後幾行
 print(data[['Close', 'EMA12', 'EMA26', 'MACD', 'Signal_Line', 'MACD_Histogram']].tail(20))
+
+data.to_csv('stocks.csv', index=False)

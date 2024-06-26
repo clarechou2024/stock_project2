@@ -6,3 +6,4 @@ ttkthemes
 tkintermapview
 matplotlib
 seaborn
+yfinance
