@@ -109,25 +109,26 @@ class Window(tkinter.Tk):
             #將該網站的日期從str -> datetime
             month_datas['日期'] = month_datas['日期'].apply(datas.parse_custom_date)
 
-        #特徵值使用
-        window=20
-        sma:pd.DataFrame = Feature().Calculate_Moving_Average(data=month_datas, window=window)
-        month_datas=sma
+        print(month_datas)
+        # #特徵值使用
+        # window=20
+        # sma:pd.DataFrame = Feature().Calculate_Moving_Average(data=month_datas, window=window)
+        # month_datas=sma
 
-        rsi:pd.DataFrame= Feature().Calculate_Rsi(data=month_datas,window=window)
-        month_datas=rsi
+        # rsi:pd.DataFrame= Feature().Calculate_Rsi(data=month_datas,window=window)
+        # month_datas=rsi
 
-        num_std=2
-        month_datas:pd.DataFrame=Feature().Calculate_Bollinger_Bands(data=month_datas,window=window,num_std=num_std)
+        # num_std=2
+        # month_datas:pd.DataFrame=Feature().Calculate_Bollinger_Bands(data=month_datas,window=window,num_std=num_std)
         
-        self._stock_data=month_datas
-        # 將 month_datas 寫入 data.csv
-        month_datas.to_csv('data.csv', index=False)
+        # self._stock_data=month_datas
+        # # 將 month_datas 寫入 data.csv
+        # month_datas.to_csv('data.csv', index=False)
 
 
-        self.create_checkbuttons()
-        self.boxplot_features()
-        self.distplot_features()
+        # self.create_checkbuttons()
+        # self.boxplot_features()
+        # self.distplot_features()
 
     def create_checkbuttons(self):
         for widget in self.left_bottom_frame.winfo_children():
