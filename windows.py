@@ -99,6 +99,7 @@ class Window(tkinter.Tk):
         file_path='data.csv'
 
         month_datas=pd.DataFrame()
+        original_datas=pd.DataFrame()
         #檢查是否檔案下載了
         if rdata.Check_Data_Csv():
             print("csv 已經存在")
@@ -106,29 +107,28 @@ class Window(tkinter.Tk):
         else:
             print("下載檔案")
             original_datas:pd.DataFrame=rdata.Get_N_Month_Data(month_num=month_num,stock_id=stock_id)
-            numeric_cols = original_datas.select_dtypes(include=['float64', 'int64']).columns
-            month_datas[numeric_cols] = original_datas[numeric_cols]
+            
 
             #將該網站的日期從str -> datetime
             # month_datas['日期'] = month_datas['日期'].apply(datas.parse_custom_date)
 
-        #特徵值使用
-        window=20
-        sma:pd.DataFrame = Feature().Calculate_Moving_Average(data=month_datas, window=window)
-        month_datas=sma
+            #特徵值使用
+            window=20
+            sma:pd.DataFrame = Feature().Calculate_Moving_Average(data=original_datas, window=window)
+            original_datas=sma
 
-        rsi:pd.DataFrame= Feature().Calculate_Rsi(data=month_datas,window=window)
-        month_datas=rsi
+            rsi:pd.DataFrame= Feature().Calculate_Rsi(data=original_datas,window=window)
+            original_datas=rsi
 
-        num_std=2
-        month_datas:pd.DataFrame=Feature().Calculate_Bollinger_Bands(data=month_datas,window=window,num_std=num_std)
+            num_std=2
+            original_datas:pd.DataFrame=Feature().Calculate_Bollinger_Bands(data=original_datas,window=window,num_std=num_std)
+            
+            
+            month_datas=original_datas.drop(columns=['Date'])
+            # 將 month_datas 寫入 data.csv
+            month_datas.to_csv('data.csv', index=False)
         
-        original_datas = pd.concat([original_datas, month_datas[['sma', 'rsi', 'upperband', 'std_dev', 'lowerband','ma']]], axis=1)
         self._stock_data=month_datas
-        # 將 month_datas 寫入 data.csv
-        # print(original_datas)
-        month_datas.to_csv('data.csv', index=False)
-
 
         self.create_checkbuttons()
         self.boxplot_features()
