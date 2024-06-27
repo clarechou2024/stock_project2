@@ -126,7 +126,7 @@ class Window(tkinter.Tk):
         original_datas = pd.concat([original_datas, month_datas[['sma', 'rsi', 'upperband', 'std_dev', 'lowerband','ma']]], axis=1)
         self._stock_data=month_datas
         # 將 month_datas 寫入 data.csv
-        print(original_datas)
+        # print(original_datas)
         month_datas.to_csv('data.csv', index=False)
 
 
