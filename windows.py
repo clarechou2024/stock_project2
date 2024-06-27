@@ -123,11 +123,12 @@ class Window(tkinter.Tk):
         num_std=2
         month_datas:pd.DataFrame=Feature().Calculate_Bollinger_Bands(data=month_datas,window=window,num_std=num_std)
         
+        original_datas = pd.concat([original_datas, month_datas[['sma', 'rsi', 'upperband', 'std_dev', 'lowerband','ma']]], axis=1)
         self._stock_data=month_datas
         # 將 month_datas 寫入 data.csv
+        print(original_datas)
         month_datas.to_csv('data.csv', index=False)
 
-        # print(month_datas)
 
         self.create_checkbuttons()
         self.boxplot_features()
