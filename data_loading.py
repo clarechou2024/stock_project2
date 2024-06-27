@@ -17,6 +17,7 @@ def Get_N_Month_Data(month_num:int,stock_id:int) ->pd.DataFrame:
     start_date = '2008-01-01'
     end_date = '2023-12-31'
     data = yf.download(ticker, start=start_date, end=end_date)
+    data = data.reset_index()
 
     return data
     

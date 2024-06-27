@@ -109,7 +109,7 @@ class Window(tkinter.Tk):
             #將該網站的日期從str -> datetime
             # month_datas['日期'] = month_datas['日期'].apply(datas.parse_custom_date)
 
-        
+        print(month_datas)
         #特徵值使用
         window=20
         sma:pd.DataFrame = Feature().Calculate_Moving_Average(data=month_datas, window=window)
