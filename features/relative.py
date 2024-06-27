@@ -12,7 +12,7 @@ def Calculate_Rsi(data:pd.DataFrame, window=14)->pd.DataFrame:
     - pandas Series with RSI values.
     """
 
-    delta = pd.Series(data['收盤價'].astype(float).values).diff()
+    delta = pd.Series(data['Close'].astype(float).values).diff()
     gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
     
@@ -20,7 +20,7 @@ def Calculate_Rsi(data:pd.DataFrame, window=14)->pd.DataFrame:
     rsi = round(100 - (100 / (1 + rs)),4)
     
     data['rsi']=rsi
-    close_mean:pd.Series=data['收盤價'].astype(float).mean()
+    close_mean:pd.Series=data['Close'].astype(float).mean()
     data['rsi']=data['rsi'].fillna(round(close_mean,4))
 
     return data

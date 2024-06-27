@@ -107,8 +107,9 @@ class Window(tkinter.Tk):
             print("下載檔案")
             month_datas:pd.DataFrame=rdata.Get_N_Month_Data(month_num=month_num,stock_id=stock_id)
             #將該網站的日期從str -> datetime
-            month_datas['日期'] = month_datas['日期'].apply(datas.parse_custom_date)
+            # month_datas['日期'] = month_datas['日期'].apply(datas.parse_custom_date)
 
+        
         #特徵值使用
         window=20
         sma:pd.DataFrame = Feature().Calculate_Moving_Average(data=month_datas, window=window)
@@ -124,6 +125,7 @@ class Window(tkinter.Tk):
         # 將 month_datas 寫入 data.csv
         month_datas.to_csv('data.csv', index=False)
 
+        # print(month_datas)
 
         self.create_checkbuttons()
         self.boxplot_features()
