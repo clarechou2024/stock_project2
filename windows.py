@@ -105,11 +105,13 @@ class Window(tkinter.Tk):
             month_datas = pd.read_csv(file_path)
         else:
             print("下載檔案")
-            month_datas:pd.DataFrame=rdata.Get_N_Month_Data(month_num=month_num,stock_id=stock_id)
+            original_datas:pd.DataFrame=rdata.Get_N_Month_Data(month_num=month_num,stock_id=stock_id)
+            numeric_cols = original_datas.select_dtypes(include=['float64', 'int64']).columns
+            month_datas[numeric_cols] = original_datas[numeric_cols]
+
             #將該網站的日期從str -> datetime
             # month_datas['日期'] = month_datas['日期'].apply(datas.parse_custom_date)
 
-        print(month_datas)
         #特徵值使用
         window=20
         sma:pd.DataFrame = Feature().Calculate_Moving_Average(data=month_datas, window=window)
@@ -121,11 +123,12 @@ class Window(tkinter.Tk):
         num_std=2
         month_datas:pd.DataFrame=Feature().Calculate_Bollinger_Bands(data=month_datas,window=window,num_std=num_std)
         
+        original_datas = pd.concat([original_datas, month_datas[['sma', 'rsi', 'upperband', 'std_dev', 'lowerband','ma']]], axis=1)
         self._stock_data=month_datas
         # 將 month_datas 寫入 data.csv
+        # print(original_datas)
         month_datas.to_csv('data.csv', index=False)
 
-        # print(month_datas)
 
         self.create_checkbuttons()
         self.boxplot_features()
