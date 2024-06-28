@@ -122,7 +122,7 @@ class Window(tkinter.Tk):
 
         num_std=2
         month_datas:pd.DataFrame=Feature().Calculate_Bollinger_Bands(data=month_datas,window=window,num_std=num_std)
-        macd=Macd.calculate_macd(month_datas)
+        month_datas = Macd.calculate_macd(month_datas)
         original_datas = pd.concat([original_datas, month_datas[['sma', 'rsi', 'upperband', 'std_dev', 'lowerband','ma']]], axis=1)
         self._stock_data=month_datas
         # 將 month_datas 寫入 data.csv
