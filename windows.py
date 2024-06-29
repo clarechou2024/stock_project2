@@ -183,16 +183,57 @@ class Window(tkinter.Tk):
             original_datas = Feature()._Calculate_Macd(original_datas)
             #丟33筆
             original_datas:pd.DataFrame = original_datas.iloc[33:]
+            #去除離群值
+            for column in original_datas.columns:
+                n=1.5
+                IQR = np.percentile(original_datas[column],75) - np.percentile(original_datas[column],25)
+                original_datas=original_datas[original_datas[column] < np.percentile(original_datas[column],75)+n*IQR]
+                #outlier = Q1 - n*IQR
+                original_datas=original_datas[original_datas[column] > np.percentile(original_datas[column],25)-n*IQR]
+
+            #將close 改到最後面
+            cols = original_datas.columns.tolist()
+            cols.append(cols.pop(cols.index('Close')))
+            original_datas = original_datas[cols]
+
             month_datas = original_datas.drop(columns=['Date'])
-            self._stock_data=month_datas
             # 將 month_datas 寫入 data.csv
-            print(original_datas)
             month_datas.to_csv('data.csv', index=False)
 
-
-        self.create_checkbuttons()        
+        self._stock_data=month_datas
+        self.feature_extraction()
+        # self.create_checkbuttons()        
         self.boxplot_features()
         self.distplot_features()
+
+    def feature_extraction(self):
+
+        choose_function_label = ttk.Label(self.left_bottom_frame, text="特徵選擇方法:")
+        choose_function_label.grid(row=0, column=0, padx=10, pady=10, sticky="W")
+        self.choose_function_combobox = ttk.Combobox(self.left_bottom_frame, values=['pearson','kendall','spearman'], state='readonly')
+        self.choose_function_combobox.grid(row=0, column=1, padx=10, pady=10, sticky="W")
+        self.choose_function_combobox.bind("<<ComboboxSelected>>", self.plot_heatmap)
+
+    def plot_heatmap(self, event=None):
+        selected_method = event.widget.get()
+        if not selected_method:
+            return
+        
+        corr_matrix = self._stock_data.corr(method=selected_method.lower())
+
+        # Create a figure and plot the heatmap
+        fig = plt.Figure(figsize=(8, 8), dpi=100)
+        ax = fig.add_subplot(111)
+        sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", annot_kws={"size": 5}, ax=ax)
+        ax.set_title(f'Correlation Heatmap (Method: {selected_method})')
+
+        # Embed the plot in a tkinter canvas
+        canvas = FigureCanvasTkAgg(fig, master=self.left_bottom_frame)
+        canvas.draw()
+        canvas.get_tk_widget().grid(row=1, column=0,padx=10, pady=10, sticky="W")
+
+        # Update canvas scroll region
+        canvas.get_tk_widget().bind("<Configure>", lambda e: canvas.get_tk_widget().configure(scrollregion=canvas.get_tk_widget().bbox("all")))
 
     def create_checkbuttons(self):
         for widget in self.left_bottom_frame.winfo_children():
@@ -221,7 +262,7 @@ class Window(tkinter.Tk):
     def boxplot_features(self):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
-        selected_features = self.get_selected_features()
+        selected_features = self._stock_data.columns
         for i, fea in enumerate(selected_features):
             fig, ax = plt.subplots(figsize=(6, 4))
             ax.boxplot(self._stock_data[fea], showmeans=True)
@@ -234,7 +275,7 @@ class Window(tkinter.Tk):
 
     #畫常態圖
     def distplot_features(self):
-        selected_features = self.get_selected_features()
+        selected_features = self._stock_data.columns
         for i, fea in enumerate(selected_features):
             fig, ax = plt.subplots(figsize=(6, 4))
             sns.distplot(self._stock_data[fea], ax=ax, hist=True, kde=True, rug=False, bins=20,
