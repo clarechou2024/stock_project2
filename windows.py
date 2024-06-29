@@ -129,13 +129,13 @@ class Window(tkinter.Tk):
 
         if start_month == "月份":
             return
-
-        if start_year == int(self.end_year_combobox.get()):  # 如果开始年份等于结束年份
-            self.end_month_combobox['values'] = [f'{i:02d}' for i in range(start_month , 13)]
-            self.end_month_combobox.set(f'{start_month :02d}')
-        else:
-            self.end_month_combobox['values'] = [f'{i:02d}' for i in range(1, 13)]
-            self.end_month_combobox.set("月份")
+        if self.end_year_combobox.get() != "年份(西元)":
+            if (start_year == int(self.end_year_combobox.get())) and self.end_year_combobox.get() != "年份(西元)":  # 如果开始年份等于结束年份
+                self.end_month_combobox['values'] = [f'{i:02d}' for i in range(start_month , 13)]
+                self.end_month_combobox.set(f'{start_month :02d}')
+            else:
+                self.end_month_combobox['values'] = [f'{i:02d}' for i in range(1, 13)]
+                self.end_month_combobox.set("月份")
 
     def update_stock_id(self):
         try:
