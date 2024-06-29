@@ -102,6 +102,7 @@ class Window(tkinter.Tk):
         self.start_month_combobox = ttk.Combobox(self.left_top_frame, values=[f'{i:02d}' for i in range(1, 13)], state='readonly')
         self.start_month_combobox.set("月份")
         self.start_month_combobox.grid(row=2, column=1, padx=10, pady=10, sticky="W")
+        self.start_month_combobox.bind("<<ComboboxSelected>>", self.update_end_months)
 
         # 结束年份
         end_year_label = ttk.Label(self.left_top_frame, text="結束年:")
@@ -121,6 +122,20 @@ class Window(tkinter.Tk):
         start_year = int(self.start_year_combobox.get())
         self.end_year_combobox['values'] = list(range(start_year, 2024))
         self.end_year_combobox.set("年份(西元)")
+
+    def update_end_months(self, event=None):
+        start_year = int(self.start_year_combobox.get())
+        start_month = int(self.start_month_combobox.get())
+
+        if start_month == "月份":
+            return
+
+        if start_year == int(self.end_year_combobox.get()):  # 如果开始年份等于结束年份
+            self.end_month_combobox['values'] = [f'{i:02d}' for i in range(start_month , 13)]
+            self.end_month_combobox.set(f'{start_month :02d}')
+        else:
+            self.end_month_combobox['values'] = [f'{i:02d}' for i in range(1, 13)]
+            self.end_month_combobox.set("月份")
 
     def update_stock_id(self):
         try:
