@@ -7,6 +7,7 @@ from features.feature import Feature
 #python 套件
 import tkinter 
 from tkinter import ttk
+from tkinter import messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
 from numpy import random    #亂數產生
@@ -35,26 +36,28 @@ class Window(tkinter.Tk):
         main_frame.grid_columnconfigure(1, weight=1)
         main_frame.grid_rowconfigure(0, weight=1)
         #左-------------------------------------------------------------------------------------------
-        left_frame=ttk.Frame(main_frame)
+        self.left_frame=ttk.Frame(main_frame)
         #left_frame的設定
-        left_frame.grid_rowconfigure(0, weight=1)
-        left_frame.grid_rowconfigure(1, weight=1)
-        left_frame.grid_columnconfigure(0, weight=1)
+        self.left_frame.grid_rowconfigure(0, weight=1)
+        self.left_frame.grid_rowconfigure(1, weight=1)
+        self.left_frame.grid_columnconfigure(0, weight=1)
 
-        left_top_frame = ttk.Frame(left_frame, style="LeftTop.TFrame")
+        self.left_top_frame = ttk.Frame(self.left_frame, style="LeftTop.TFrame")
 
         self.stock_id_var = tkinter.StringVar()
-        ttk.Label(left_top_frame, text="stock_id").grid(row=0,column=0,padx=(10,10),pady=(10,10))
-        ttk.Entry(left_top_frame, textvariable=self.stock_id_var).grid(row=0,column=1,padx=(10,10),pady=(10,10))
-        ttk.Button(left_top_frame,text="送出",command=self.update_stock_id).grid(row=1,column=1,sticky="se")
+        ttk.Label(self.left_top_frame, text="stock_id").grid(row=0,column=0,padx=(10,10),pady=(10,10))
+        ttk.Entry(self.left_top_frame, textvariable=self.stock_id_var).grid(row=0,column=1,padx=(10,10),pady=(10,10))
+        ttk.Button(self.left_top_frame,text="送出",command=self.update_stock_id).grid(row=5,column=1,sticky="se")
 
-        left_top_frame.grid(row=0, column=0, sticky="nsew")
+        self.choose_date()
 
-        self.left_bottom_frame = ttk.Frame(left_frame, style="LeftBottom.TFrame")
+        self.left_top_frame.grid(row=0, column=0, sticky="nsew")
+
+        self.left_bottom_frame = ttk.Frame(self.left_frame, style="LeftBottom.TFrame")
 
         self.left_bottom_frame.grid(row=1, column=0, sticky="nsew")
 
-        left_frame.grid(row=0,column=0,sticky="nsew")
+        self.left_frame.grid(row=0,column=0,sticky="nsew")
         #左-------------------------------------------------------------------------------------------
 
         #右-------------------------------------------------------------------------------------------
@@ -83,17 +86,60 @@ class Window(tkinter.Tk):
     @property
     def stock_id(self):
         return self._stock_id
+    
+    def choose_date(self):
+        # 开始年份
+        start_year_label = ttk.Label(self.left_top_frame, text="起始年:")
+        start_year_label.grid(row=1, column=0, padx=10, pady=10, sticky="W")
+        self.start_year_combobox = ttk.Combobox(self.left_top_frame, values=list(range(2008, 2024)), state='readonly')
+        self.start_year_combobox.set("年份(西元)")
+        self.start_year_combobox.grid(row=1, column=1, padx=10, pady=10, sticky="W")
+        self.start_year_combobox.bind("<<ComboboxSelected>>", self.update_end_years)
+
+        # 开始月份
+        start_month_label = ttk.Label(self.left_top_frame, text="起始月:")
+        start_month_label.grid(row=2, column=0, padx=10, pady=10, sticky="W")
+        self.start_month_combobox = ttk.Combobox(self.left_top_frame, values=[f'{i:02d}' for i in range(1, 13)], state='readonly')
+        self.start_month_combobox.set("月份")
+        self.start_month_combobox.grid(row=2, column=1, padx=10, pady=10, sticky="W")
+
+        # 结束年份
+        end_year_label = ttk.Label(self.left_top_frame, text="結束年:")
+        end_year_label.grid(row=3, column=0, padx=10, pady=10, sticky="W")
+        self.end_year_combobox = ttk.Combobox(self.left_top_frame, state='readonly')
+        self.end_year_combobox.set("年份(西元)")
+        self.end_year_combobox.grid(row=3, column=1, padx=10, pady=10, sticky="W")
+
+        # 结束月份
+        end_month_label = ttk.Label(self.left_top_frame, text="結束月:")
+        end_month_label.grid(row=4, column=0, padx=10, pady=10, sticky="W")
+        self.end_month_combobox = ttk.Combobox(self.left_top_frame, values=[f'{i:02d}' for i in range(1, 13)], state='readonly')
+        self.end_month_combobox.set("月份")
+        self.end_month_combobox.grid(row=4, column=1, padx=10, pady=10, sticky="W")
+
+    def update_end_years(self, event):
+        start_year = int(self.start_year_combobox.get())
+        self.end_year_combobox['values'] = list(range(start_year, 2024))
+        self.end_year_combobox.set("年份(西元)")
 
     def update_stock_id(self):
         try:
             self._stock_id = int(self.stock_id_var.get())
-            self.main()
+            start_year = self.start_year_combobox.get()
+            start_month = self.start_month_combobox.get()
+            end_year = self.end_year_combobox.get()
+            end_month = self.end_month_combobox.get()
+
+            if (start_year == "年份(西元)" or start_month == "月份" or
+                end_year == "年份(西元)" or end_month == "月份"):
+                messagebox.showinfo("Input Error", "Please select both start and end dates.")
+            else:
+                self.main(start_year, start_month, end_year, end_month)
 
         except ValueError:
             print("Invalid stock ID input")
 
-    def main(self):
-        month_num=6
+    def main(self,start_year, start_month, end_year, end_month):
         stock_id=self.stock_id
         file_path='data.csv'
 
@@ -105,7 +151,9 @@ class Window(tkinter.Tk):
             month_datas = pd.read_csv(file_path)
         else:
             print("下載檔案")
-            original_datas:pd.DataFrame=rdata.Get_N_Month_Data(month_num=month_num,stock_id=stock_id)
+            original_datas:pd.DataFrame=rdata.Get_N_Month_Data(stock_id=stock_id,
+                                                               start_year=start_year,start_month=start_month,
+                                                               end_year=end_year,end_month=end_month)
             
             #將該網站的日期從str -> datetime
             # month_datas['日期'] = month_datas['日期'].apply(datas.parse_custom_date)
