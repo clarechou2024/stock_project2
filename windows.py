@@ -14,6 +14,8 @@ from numpy import random    #亂數產生
 import numpy as np       #數學處理
 import matplotlib.pyplot as plt #繪圖
 import seaborn as sns
+from sklearn.feature_selection import SelectKBest,f_regression
+from sklearn.feature_selection import chi2
 
 class Window(tkinter.Tk):
     def __init__(self):
@@ -201,7 +203,10 @@ class Window(tkinter.Tk):
             month_datas.to_csv('data.csv', index=False)
 
         self._stock_data=month_datas
+        print(self._stock_data)
         self.feature_extraction()
+        self.boxplot_features_b()
+        self.distplot_features_b()
         # self.create_checkbuttons()        
         self.boxplot_features()
         self.distplot_features()
@@ -256,10 +261,24 @@ class Window(tkinter.Tk):
         self.distplot_features()
 
     def get_selected_features(self):
-        return [feature for feature, var in self._stock_features if var.get()]
 
+        data_x = self._stock_data.iloc[:, :-1]
+        data_y = self._stock_data.iloc[:, -1]
+        n = 16
+        chi = SelectKBest(f_regression, k=n)
+        arrchi = chi.fit_transform(data_x, data_y)
+        score = chi.scores_
+        selected_scores = score[np.abs(score) > 0.4]
+        scoresort = np.argsort(selected_scores)
+        scoresort = np.flipud(scoresort)
+        col = self._stock_data.columns
+
+        print(col[scoresort[0:5]])
+
+        return col[scoresort[0:5]]
+    
     #畫盒鬚圖
-    def boxplot_features(self):
+    def boxplot_features_b(self):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
         selected_features = self._stock_data.columns
@@ -274,7 +293,7 @@ class Window(tkinter.Tk):
             self.scrollable_frame.grid_columnconfigure(i, weight=1)
 
     #畫常態圖
-    def distplot_features(self):
+    def distplot_features_b(self):
         selected_features = self._stock_data.columns
         for i, fea in enumerate(selected_features):
             fig, ax = plt.subplots(figsize=(6, 4))
@@ -286,6 +305,33 @@ class Window(tkinter.Tk):
             canvas.draw()
             canvas.get_tk_widget().grid(row=1, column=i, sticky="nsew")
             self.scrollable_frame.grid_rowconfigure(i, weight=1)
+    #畫盒鬚圖
+    def boxplot_features(self):
+        
+        selected_features = self.get_selected_features()
+        for i, fea in enumerate(selected_features):
+            fig, ax = plt.subplots(figsize=(6, 4))
+            ax.boxplot(self._stock_data[fea], showmeans=True)
+            ax.set_title(fea)
 
+            canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
+            canvas.draw()
+            canvas.get_tk_widget().grid(row=2, column=i, sticky="nsew")
+            self.scrollable_frame.grid_columnconfigure(i, weight=1)
 
+    #畫常態圖
+    def distplot_features(self):
+        selected_features = self.get_selected_features()
+        for i, fea in enumerate(selected_features):
+            fig, ax = plt.subplots(figsize=(6, 4))
+            sns.distplot(self._stock_data[fea], ax=ax, hist=True, kde=True, rug=False, bins=20,
+                         hist_kws={'edgecolor': 'black'}, kde_kws={'linewidth': 2})
+            ax.set_title(fea)
+
+            canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
+            canvas.draw()
+            canvas.get_tk_widget().grid(row=3, column=i, sticky="nsew")
+            self.scrollable_frame.grid_rowconfigure(i, weight=1)
+
+    
         
