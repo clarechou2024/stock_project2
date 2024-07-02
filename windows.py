@@ -47,9 +47,6 @@ class Window(tkinter.Tk):
         self.left_top_frame = ttk.Frame(self.left_frame, style="LeftTop.TFrame")
 
         self.stock_id_var = tkinter.StringVar()
-        ttk.Label(self.left_top_frame, text="stock_id").grid(row=0,column=0,padx=(10,10),pady=(10,10))
-        ttk.Entry(self.left_top_frame, textvariable=self.stock_id_var).grid(row=0,column=1,padx=(10,10),pady=(10,10))
-        ttk.Button(self.left_top_frame,text="送出",command=self.update_stock_id).grid(row=5,column=1,sticky="se")
 
         self.choose_date()
 
@@ -120,6 +117,17 @@ class Window(tkinter.Tk):
         self.end_month_combobox.set("月份")
         self.end_month_combobox.grid(row=4, column=1, padx=10, pady=10, sticky="W")
 
+        # 閾值
+        alpha_label = ttk.Label(self.left_top_frame, text="閾值:")
+        alpha_label.grid(row=5, column=0, padx=10, pady=10, sticky="W")
+        self.alpha_combobox = ttk.Combobox(self.left_top_frame, values=[f'{i/10:.1f}' for i in range(0, 11)], state='readonly')
+        self.alpha_combobox.set("0.0")
+        self.alpha_combobox.grid(row=5, column=1, padx=10, pady=10, sticky="W")
+
+        ttk.Label(self.left_top_frame, text="stock_id").grid(row=0,column=0,padx=(10,10),pady=(10,10))
+        ttk.Entry(self.left_top_frame, textvariable=self.stock_id_var).grid(row=0,column=1,padx=(10,10),pady=(10,10))
+        ttk.Button(self.left_top_frame,text="送出",command=self.update_stock_id).grid(row=6,column=1,sticky="se")
+
     def update_end_years(self, event):
         start_year = int(self.start_year_combobox.get())
         self.end_year_combobox['values'] = list(range(start_year, 2024))
@@ -151,6 +159,7 @@ class Window(tkinter.Tk):
                 end_year == "年份(西元)" or end_month == "月份"):
                 messagebox.showinfo("Input Error", "Please select both start and end dates.")
             else:
+                self.clean_right()
                 self.main(start_year, start_month, end_year, end_month)
 
         except ValueError:
@@ -203,13 +212,13 @@ class Window(tkinter.Tk):
             month_datas.to_csv('data.csv', index=False)
 
         self._stock_data=month_datas
-        print(self._stock_data)
         self.feature_extraction()
-        self.boxplot_features_b()
-        self.distplot_features_b()
-        # self.create_checkbuttons()        
-        self.boxplot_features()
-        self.distplot_features()
+        self.boxplot_features(0,self._stock_data.columns)
+        self.distplot_features(1,self._stock_data.columns)
+        # self.create_checkbuttons()
+        selected_features=self.get_selected_features()
+        self.boxplot_features(2,selected_features[0:6])
+        self.distplot_features(3,selected_features[0:6])
 
     def feature_extraction(self):
 
@@ -262,53 +271,28 @@ class Window(tkinter.Tk):
 
     def get_selected_features(self):
 
+        alpha=float(self.alpha_combobox.get())
+
         data_x = self._stock_data.iloc[:, :-1]
         data_y = self._stock_data.iloc[:, -1]
         n = 16
         chi = SelectKBest(f_regression, k=n)
         arrchi = chi.fit_transform(data_x, data_y)
-        score = chi.scores_
-        selected_scores = score[np.abs(score) > 0.4]
+        score = np.round(chi.scores_,4)
+        selected_scores = score[np.abs(score) > alpha]
         scoresort = np.argsort(selected_scores)
         scoresort = np.flipud(scoresort)
         col = self._stock_data.columns
 
-        print(col[scoresort[0:5]])
-
-        return col[scoresort[0:5]]
+        return col[scoresort]
     
-    #畫盒鬚圖
-    def boxplot_features_b(self):
+    def clean_right(self):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
-        selected_features = self._stock_data.columns
-        for i, fea in enumerate(selected_features):
-            fig, ax = plt.subplots(figsize=(6, 4))
-            ax.boxplot(self._stock_data[fea], showmeans=True)
-            ax.set_title(fea)
 
-            canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
-            canvas.draw()
-            canvas.get_tk_widget().grid(row=0, column=i, sticky="nsew")
-            self.scrollable_frame.grid_columnconfigure(i, weight=1)
-
-    #畫常態圖
-    def distplot_features_b(self):
-        selected_features = self._stock_data.columns
-        for i, fea in enumerate(selected_features):
-            fig, ax = plt.subplots(figsize=(6, 4))
-            sns.distplot(self._stock_data[fea], ax=ax, hist=True, kde=True, rug=False, bins=20,
-                         hist_kws={'edgecolor': 'black'}, kde_kws={'linewidth': 2})
-            ax.set_title(fea)
-
-            canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
-            canvas.draw()
-            canvas.get_tk_widget().grid(row=1, column=i, sticky="nsew")
-            self.scrollable_frame.grid_rowconfigure(i, weight=1)
     #畫盒鬚圖
-    def boxplot_features(self):
+    def boxplot_features(self,index,selected_features):
         
-        selected_features = self.get_selected_features()
         for i, fea in enumerate(selected_features):
             fig, ax = plt.subplots(figsize=(6, 4))
             ax.boxplot(self._stock_data[fea], showmeans=True)
@@ -316,12 +300,12 @@ class Window(tkinter.Tk):
 
             canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
             canvas.draw()
-            canvas.get_tk_widget().grid(row=2, column=i, sticky="nsew")
+            canvas.get_tk_widget().grid(row=index, column=i, sticky="nsew")
             self.scrollable_frame.grid_columnconfigure(i, weight=1)
 
     #畫常態圖
-    def distplot_features(self):
-        selected_features = self.get_selected_features()
+    def distplot_features(self,index,selected_features):
+
         for i, fea in enumerate(selected_features):
             fig, ax = plt.subplots(figsize=(6, 4))
             sns.distplot(self._stock_data[fea], ax=ax, hist=True, kde=True, rug=False, bins=20,
@@ -330,7 +314,7 @@ class Window(tkinter.Tk):
 
             canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
             canvas.draw()
-            canvas.get_tk_widget().grid(row=3, column=i, sticky="nsew")
+            canvas.get_tk_widget().grid(row=index, column=i, sticky="nsew")
             self.scrollable_frame.grid_rowconfigure(i, weight=1)
 
     
