@@ -8,6 +8,7 @@ from features.feature import Feature
 import tkinter 
 from tkinter import ttk
 from tkinter import messagebox
+from ttkthemes import ThemedTk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
 from numpy import random    #亂數產生
@@ -17,13 +18,13 @@ import seaborn as sns
 from sklearn.feature_selection import SelectKBest,f_regression
 from sklearn.feature_selection import chi2
 
-class Window(tkinter.Tk):
-    def __init__(self):
+class Window(ThemedTk):
+    def __init__(self,**kwargs):
         self._stock_id:int=0
         self._stock_data:pd.DataFrame=None
         self._stock_features:list=[]
 
-        super().__init__()
+        super().__init__(**kwargs)
         self.title("stock window")
         self.geometry("800x600")
 
