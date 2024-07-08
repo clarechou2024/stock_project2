@@ -196,12 +196,12 @@ class Window(ThemedTk):
             #丟33筆
             original_datas:pd.DataFrame = original_datas.iloc[33:]
             #去除離群值
-            for column in original_datas.columns:
-                n=1.5
-                IQR = np.percentile(original_datas[column],75) - np.percentile(original_datas[column],25)
-                original_datas=original_datas[original_datas[column] < np.percentile(original_datas[column],75)+n*IQR]
-                #outlier = Q1 - n*IQR
-                original_datas=original_datas[original_datas[column] > np.percentile(original_datas[column],25)-n*IQR]
+            # for column in original_datas.columns:
+            #     n=1.5
+            #     IQR = np.percentile(original_datas[column],75) - np.percentile(original_datas[column],25)
+            #     original_datas=original_datas[original_datas[column] < np.percentile(original_datas[column],75)+n*IQR]
+            #     #outlier = Q1 - n*IQR
+            #     original_datas=original_datas[original_datas[column] > np.percentile(original_datas[column],25)-n*IQR]
 
             #將close 改到最後面
             cols = original_datas.columns.tolist()
@@ -209,6 +209,7 @@ class Window(ThemedTk):
             original_datas = original_datas[cols]
 
             month_datas = original_datas.drop(columns=['Date'])
+            original_datas.to_csv('2330.csv', index=False)
             # 將 month_datas 寫入 data.csv
             month_datas.to_csv('data.csv', index=False)
 
