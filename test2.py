@@ -267,7 +267,7 @@ def svm():
 # DR_Linear_regression()
 # Logisticregression()
 # classificationreport()
-svc()
+# svc()
 # svcandpca()
 # svm()
 

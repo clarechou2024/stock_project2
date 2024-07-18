@@ -11,7 +11,8 @@ from sklearn.feature_selection import SelectKBest,f_regression
 from sklearn.feature_selection import chi2
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-
+import features
+from features.feature import Feature
 class App(ThemedTk):
     def __init__(self):
         super().__init__()
@@ -137,9 +138,29 @@ class App(ThemedTk):
         close_button.grid(row=0, column=1, sticky="e")
         close_button.bind("<Button-1>", lambda e, tab_id=tab_id: self.close_tab(tab_id))
 
+        self.func_frame = ttk.Frame(new_tab, padding=20)
+        self.func_frame.grid(row=3, column=0 ,sticky="nsew")
+
+        ma_button = ttk.Button(self.func_frame, text=" 123",command=lambda: self.ma(tab_name))
+        ma_button.grid(row=0, column=1, sticky="w")
+        
+
         self.tabs[tab_id] = {"frame": new_tab, "title_frame": tab_title_frame, "button": close_button}
 
         self.tab_control.select(new_tab)
+
+    def ma(self,tab_name):
+        
+        sol=['sma']
+
+        window=5
+
+        original_datas = Feature().Calculate_Moving_Average(data=self._stock_data[tab_name], window=window)
+        
+        self._stock_data[tab_name]=original_datas
+        print(self._stock_data[tab_name])
+
+        self.distplot_features(0, sol,tab_name)
 
     def candlestick_chat_graph(self,data,frame):
         # 创建 matplotlib 图形
@@ -379,18 +400,21 @@ class App(ThemedTk):
             self.scrollable_frame.grid_columnconfigure(i, weight=1)
 
     #畫常態圖
-    def distplot_features(self,selected_features):
+    def distplot_features(self,index,selected_features,tab_name):
 
         for i, fea in enumerate(selected_features):
             fig, ax = plt.subplots(figsize=(6, 4))
-            sns.distplot(self._stock_data[fea], ax=ax, hist=True, kde=True, rug=False, bins=20,
-                         hist_kws={'edgecolor': 'black'}, kde_kws={'linewidth': 2})
+            ax.plot(self._stock_data[tab_name]['Date'], self._stock_data[tab_name]['sma'], label='SMA')  # Plot SMA data
+            ax.set_xlabel('Date')
+            ax.set_ylabel('SMA')
             ax.set_title(fea)
 
-            canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
+             # 調整 X 軸刻度間距
+            ax.xaxis.set_major_locator(mticker.AutoLocator())  # 自動設置刻度間距
+
+            canvas = FigureCanvasTkAgg(fig, master=self.func_frame)
             canvas.draw()
-            canvas.get_tk_widget().grid(row=1, column=i, sticky="nsew")
-            self.scrollable_frame.grid_rowconfigure(i, weight=1)
+            canvas.get_tk_widget().grid(row=index, column=i, sticky="nsew")
 
 if __name__ == "__main__":
 
