@@ -9,6 +9,8 @@ import matplotlib.ticker as mticker
 import seaborn as sns
 from sklearn.feature_selection import SelectKBest,f_regression
 from sklearn.feature_selection import chi2
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
 
 class App(ThemedTk):
     def __init__(self):
@@ -91,6 +93,7 @@ class App(ThemedTk):
                 return 
 
         df = self._stock_data[number]
+        
 
         return df
 
@@ -362,6 +365,32 @@ class App(ThemedTk):
             correlation = score[idx]
             tree.insert("", "end", values=[feature, correlation])
 
+    #畫盒鬚圖
+    def boxplot_features(self,selected_features):
+        
+        for i, fea in enumerate(selected_features):
+            fig, ax = plt.subplots(figsize=(6, 4))
+            ax.boxplot(self._stock_data[fea], showmeans=True)
+            ax.set_title(fea)
+
+            canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
+            canvas.draw()
+            canvas.get_tk_widget().grid(row=0, column=i, sticky="nsew")
+            self.scrollable_frame.grid_columnconfigure(i, weight=1)
+
+    #畫常態圖
+    def distplot_features(self,selected_features):
+
+        for i, fea in enumerate(selected_features):
+            fig, ax = plt.subplots(figsize=(6, 4))
+            sns.distplot(self._stock_data[fea], ax=ax, hist=True, kde=True, rug=False, bins=20,
+                         hist_kws={'edgecolor': 'black'}, kde_kws={'linewidth': 2})
+            ax.set_title(fea)
+
+            canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
+            canvas.draw()
+            canvas.get_tk_widget().grid(row=1, column=i, sticky="nsew")
+            self.scrollable_frame.grid_rowconfigure(i, weight=1)
 
 if __name__ == "__main__":
 
