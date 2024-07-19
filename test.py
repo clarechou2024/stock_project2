@@ -117,14 +117,14 @@ class App(ThemedTk):
         heat_map_button = ttk.Button(top_frame, text="熱力圖", command=lambda: self.show_heat_map(nodate_datas))
         heat_map_button.grid(row=1, column=2, padx=10, pady=10, sticky="w")
 
-        feature_check_button = ttk.Button(top_frame, text="特徵驗證", command=lambda: self.feature_check(nodate_datas))
+        feature_check_button = ttk.Button(top_frame, text="特徵驗證", command=lambda: self.feature_check(nodate_datas,tab_name))
         feature_check_button.grid(row=1, column=3, padx=10, pady=10, sticky="w")
 
-        Bottom_frame = ttk.Frame(new_tab, padding=20)
-        Bottom_frame.grid(row=2, column=0, sticky="nsew")
+        self.Bottom_frame = ttk.Frame(new_tab, padding=20)
+        self.Bottom_frame.grid(row=2, column=0, sticky="nsew")
 
-        self.candlestick_chat_graph(data, Bottom_frame)
-        self.macd_graph(data, Bottom_frame)
+        self.candlestick_chat_graph(data, self.Bottom_frame)
+        self.macd_graph(data, self.Bottom_frame)
 
         tab_id = self.tab_control.index("end") - 1
 
@@ -141,26 +141,20 @@ class App(ThemedTk):
         self.func_frame = ttk.Frame(new_tab, padding=20)
         self.func_frame.grid(row=3, column=0 ,sticky="nsew")
 
-        ma_button = ttk.Button(self.func_frame, text=" 123",command=lambda: self.ma(tab_name))
-        ma_button.grid(row=0, column=1, sticky="w")
-        
-
         self.tabs[tab_id] = {"frame": new_tab, "title_frame": tab_title_frame, "button": close_button}
 
         self.tab_control.select(new_tab)
 
-    def ma(self,tab_name):
-        
+    def ma(self,tab_name,window,text):
+         # 創建彈跳視窗
+        self.popup = tk.Toplevel()
+        self.popup.title(text)
+
         sol=['sma']
-
-        window=5
-
         original_datas = Feature().Calculate_Moving_Average(data=self._stock_data[tab_name], window=window)
-        
         self._stock_data[tab_name]=original_datas
-        print(self._stock_data[tab_name])
 
-        self.distplot_features(0, sol,tab_name)
+        self.distplot_features(0,sol,tab_name)
 
     def candlestick_chat_graph(self,data,frame):
         # 创建 matplotlib 图形
@@ -185,7 +179,7 @@ class App(ThemedTk):
 
         # 绘制折线图
         ax.plot(data['Date'], data['upperband'], marker='', color='blue', linewidth=1, linestyle='--', label='Upper Band')
-        ax.plot(data['Date'], data['ma'], marker='', color='black', linewidth=1, label='Price (MA)')
+        ax.plot(data['Date'], data['sma'], marker='', color='black', linewidth=1, label='Price (MA)')
         ax.plot(data['Date'], data['lowerband'], marker='', color='red', linewidth=1, linestyle='--', label='Lower Band')
 
         # 设置标题和标签
@@ -345,7 +339,7 @@ class App(ThemedTk):
         # Update canvas scroll region
         canvas.get_tk_widget().bind("<Configure>", lambda e: canvas.get_tk_widget().configure(scrollregion=canvas.get_tk_widget().bbox("all")))
 
-    def feature_check(self, data):
+    def feature_check(self, data,tab_name):
         top_window = tk.Toplevel(self)
         top_window.title("特徵驗證")
         top_window.geometry("600x500")
@@ -355,10 +349,10 @@ class App(ThemedTk):
         
         feature_check_combobox = ttk.Combobox(feature_check_frame, values=['f_regression'], state='readonly')
         feature_check_combobox.grid(row=0, column=1, padx=10, pady=10, sticky="W")
-        feature_check_combobox.bind("<<ComboboxSelected>>", lambda event: self.feature_score(data, feature_check_frame, event))
+        feature_check_combobox.bind("<<ComboboxSelected>>", lambda event: self.feature_score(data, feature_check_frame,tab_name, event))  
+
         
-        
-    def feature_score(self,data,frame,event=None):
+    def feature_score(self,data,frame,tab_name,event=None,):
 
         df = data.iloc[:, :-1]
         target = data.iloc[:, -1]
@@ -386,33 +380,38 @@ class App(ThemedTk):
             correlation = score[idx]
             tree.insert("", "end", values=[feature, correlation])
 
+        # ma_button = ttk.Button(self.func_frame, text=" 常態圖",command=lambda: self.boxplot_features)
+        # ma_button.grid(row=0, column=0, sticky="w")
+        
+        ma_button = ttk.Button(frame, text=" 盒鬚圖",command=lambda: self.boxplot_features(col[scoresort],tab_name,frame))
+        ma_button.grid(row=2, column=0, sticky="w")
+
     #畫盒鬚圖
-    def boxplot_features(self,selected_features):
+    def boxplot_features(self,selected_features,tab_name,frame):
         
         for i, fea in enumerate(selected_features):
             fig, ax = plt.subplots(figsize=(6, 4))
-            ax.boxplot(self._stock_data[fea], showmeans=True)
+            ax.boxplot(self._stock_data[tab_name][fea], showmeans=True)
             ax.set_title(fea)
 
-            canvas = FigureCanvasTkAgg(fig, master=self.scrollable_frame)
+            canvas = FigureCanvasTkAgg(fig, master=frame)
             canvas.draw()
             canvas.get_tk_widget().grid(row=0, column=i, sticky="nsew")
-            self.scrollable_frame.grid_columnconfigure(i, weight=1)
 
     #畫常態圖
     def distplot_features(self,index,selected_features,tab_name):
 
         for i, fea in enumerate(selected_features):
             fig, ax = plt.subplots(figsize=(6, 4))
-            ax.plot(self._stock_data[tab_name]['Date'], self._stock_data[tab_name]['sma'], label='SMA')  # Plot SMA data
-            ax.set_xlabel('Date')
-            ax.set_ylabel('SMA')
+            sns.distplot(self._stock_data[tab_name]['fea'], ax=ax, hist=True, kde=True, rug=False, bins=20,
+                         hist_kws={'edgecolor': 'black'}, kde_kws={'linewidth': 2})
+            ax.set_xlabel('MA')
             ax.set_title(fea)
 
              # 調整 X 軸刻度間距
             ax.xaxis.set_major_locator(mticker.AutoLocator())  # 自動設置刻度間距
 
-            canvas = FigureCanvasTkAgg(fig, master=self.func_frame)
+            canvas = FigureCanvasTkAgg(fig, master=self.popup)
             canvas.draw()
             canvas.get_tk_widget().grid(row=index, column=i, sticky="nsew")
 

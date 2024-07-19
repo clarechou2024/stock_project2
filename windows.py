@@ -208,7 +208,8 @@ class Window(ThemedTk):
             cols.append(cols.pop(cols.index('Close')))
             original_datas = original_datas[cols]
 
-            month_datas = original_datas.drop(columns=['Date'])
+            # month_datas = original_datas.drop(columns=['Date'])
+            month_datas = original_datas
             original_datas.to_csv('2330.csv', index=False)
             # 將 month_datas 寫入 data.csv
             month_datas.to_csv('data.csv', index=False)

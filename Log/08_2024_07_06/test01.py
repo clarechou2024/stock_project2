@@ -51,7 +51,7 @@ class Window(tk.Tk):
         
 
     def click1(self):
-        
+    
         sol=['sma']
 
         window=5
