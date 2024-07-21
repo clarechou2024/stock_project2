@@ -11,7 +11,11 @@ import features
 from features.feature import Feature
 import pandas as pd
 import matplotlib.ticker as  mticker
-
+from sklearn.preprocessing import StandardScaler,LabelEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
 
 class Window(tk.Tk):
     def __init__(self,theme:str=None,**kwargs):
@@ -44,6 +48,13 @@ class Window(tk.Tk):
         center_frame.pack(pady=10)
         ttk.Button(center_frame,text='60MA',command=self.click3).pack(side='left',expand=True)
         center_frame.pack(pady=10)
+
+
+        ttk.Button(center_frame,text='線性回歸',command=self.Linear_regression).pack(side='left',expand=True)
+        center_frame.pack(pady=10) 
+        ttk.Button(center_frame,text='邏輯回歸',command=self.Logisticregression).pack(side='left',expand=True)
+        center_frame.pack(pady=10)
+
 
         self.func_frame2  = ttk.Frame(self,borderwidth=1,relief='groove')
         self.func_frame2.pack(pady=10)
@@ -146,9 +157,71 @@ class Window(tk.Tk):
             canvas = FigureCanvasTkAgg(fig, master=self.func_frame2)
             canvas.draw()
             canvas.get_tk_widget().grid(row=index, column=i, sticky="nsew")
-            
-         
+                
+    #(回歸)線性回歸
+    def Linear_regression(self):
+        top_window = tk.Toplevel(self)
+        top_window.title("線性回歸")
+        top_window.geometry("600x500")
 
+
+        data =pd.read_csv('data.csv')
+        tdf = pd.DataFrame()
+        tdf['Target'] = data['Close']
+
+        f =['Open','High','Low','Adj Close','EMA12']
+        x = data[f].values  # 排除第一列（日期）和最后两列（Target和Close）
+        y = tdf['Target'].values  # 使用 'Target' 作为目标变量
+
+        x = data.iloc[:, 1:-1].values  # 假設需要排除第一列（日期）和最後兩列（Target和Close）
+        y = tdf['Target'].values  # 使用 'Target' 作為目標變量
+
+        x_train, x_test, y_train, y_test = train_test_split(
+        x, y, test_size=0.4,random_state=39830)
+        std_x = StandardScaler()
+        x_train = std_x.fit_transform(x_train)
+        x_test = std_x.transform(x_test)
+        std_y = StandardScaler()
+        y_train = std_y.fit_transform(y_train.reshape(-1, 1))
+        y_test = std_y.transform(y_test.reshape(-1, 1))
+        lr = LinearRegression()
+        lr.fit(x_train, y_train)
+        print('權重值：{}'.format(lr.coef_))
+        print('偏置值：{}'.format(lr.intercept_))
+
+        y_predict = std_y.inverse_transform(lr.predict(x_test))
+        y_real = std_y.inverse_transform(y_test)
+        for i in range(50):
+            print('預測值：{}，真實值：{}'.format(y_predict[i], y_real[i]))
+
+        merror = mean_squared_error(y_real, y_predict)
+        print('平均方差：{}'.format(merror))
+            
+
+    #(分類)邏輯回歸
+    def Logisticregression(self):
+        top_window = tk.Toplevel(self)
+        top_window.title("邏輯回歸")
+        top_window.geometry("600x500")
+
+
+        data =pd.read_csv('data.csv')
+        tdf= pd.DataFrame()
+
+        tdf['Target'] = np.where(data['Close'].diff() > 0, 'Buy', 'Sell')
+
+        x = data.iloc[:, 1:-1].values  # 假設需要排除第一列（日期）和最後兩列（Target和Close）
+        y = tdf['Target'].values  # 使用 'Target' 作為目標變量
+
+        x_train, x_test, y_train, y_test = train_test_split(
+        x, y, test_size=0.4,random_state=39830)
+        transfer = StandardScaler()
+        x_train = transfer.fit_transform(x_train)
+        x_test = transfer.transform(x_test)
+        estimator = LogisticRegression()
+        estimator.fit(x_train, y_train)
+        score = estimator.score(x_test, y_test)
+        print("Logistic 準確率：{}".format(score))
 
 
 def main():
