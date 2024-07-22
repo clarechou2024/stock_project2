@@ -108,12 +108,14 @@ def Linear_regression():
 
     x_train, x_test, y_train, y_test = train_test_split(
     x, y, test_size=0.4,random_state=39830)
+
     std_x = StandardScaler()
     x_train = std_x.fit_transform(x_train)
     x_test = std_x.transform(x_test)
     std_y = StandardScaler()
     y_train = std_y.fit_transform(y_train.reshape(-1, 1))
     y_test = std_y.transform(y_test.reshape(-1, 1))
+
     lr = LinearRegression()
     lr.fit(x_train, y_train)
     print('權重值：{}'.format(lr.coef_))
