@@ -157,45 +157,99 @@ class Window(tk.Tk):
             canvas = FigureCanvasTkAgg(fig, master=self.func_frame2)
             canvas.draw()
             canvas.get_tk_widget().grid(row=index, column=i, sticky="nsew")
-                
+    #=========================================================
+    def feature_score(self,data,frame):
+
+        df = data.iloc[:, :-1]
+        target = data.iloc[:, -1]
+
+        n = 5
+        chi = SelectKBest(f_regression, k=16)
+        chi.fit(df, target)
+
+        score = abs(chi.scores_)
+        scoresort = np.argsort(score)
+        scoresort = np.flipud(scoresort)
+
+        for idx in scoresort[:n]:
+            feature = col[idx]
+            correlation = score[idx]
+            print("", "end", values=[feature, correlation])
+
+        return list(col[scoresort[:n]])
+
+    #=========================================================            
     #(回歸)線性回歸
     def Linear_regression(self):
         top_window = tk.Toplevel(self)
         top_window.title("線性回歸")
         top_window.geometry("600x500")
 
+        # 创建文本框用于显示结果
+        output_text = tk.Text(top_window, height=150, width=70)
+        output_text.pack(pady=20)
 
+
+    #讀取和處理數據
         data =pd.read_csv('data.csv')
+        last_row = pd.DataFrame(data.tail(1))
+
         tdf = pd.DataFrame()
         tdf['Target'] = data['Close']
 
         f =['Open','High','Low','Adj Close','EMA12']
+
+        # f= feature_score(data)
+        last_row_y=last_row['Close']
+        last_row_x=last_row[f]
         x = data[f].values  # 排除第一列（日期）和最后两列（Target和Close）
         y = tdf['Target'].values  # 使用 'Target' 作为目标变量
 
-        x = data.iloc[:, 1:-1].values  # 假設需要排除第一列（日期）和最後兩列（Target和Close）
-        y = tdf['Target'].values  # 使用 'Target' 作為目標變量
-
+    #數據預處理和分割
         x_train, x_test, y_train, y_test = train_test_split(
         x, y, test_size=0.4,random_state=39830)
+    #特徵和目標變量的標準化
         std_x = StandardScaler()
         x_train = std_x.fit_transform(x_train)
         x_test = std_x.transform(x_test)
         std_y = StandardScaler()
         y_train = std_y.fit_transform(y_train.reshape(-1, 1))
         y_test = std_y.transform(y_test.reshape(-1, 1))
+    #建構和訓練線性回歸模型
         lr = LinearRegression()
         lr.fit(x_train, y_train)
-        print('權重值：{}'.format(lr.coef_))
-        print('偏置值：{}'.format(lr.intercept_))
+        # print('權重值：{}'.format(lr.coef_))
+        # print('偏置值：{}'.format(lr.intercept_))
+    
+    # #模型評估和預測
+    #     y_predict = std_y.inverse_transform(lr.predict(x_test))
+    #     y_real = std_y.inverse_transform(y_test)
+    #     for i in range(50):
+    #         print('預測值：{}，真實值：{}'.format(y_predict[i], y_real[i]))
+
+    #     merror = mean_squared_error(y_real, y_predict)
+    #     print('平均方差：{}'.format(merror))
+
+    # 将输出结果插入到文本框中
+        output_text.insert(tk.END, '權重值：{}\n'.format(lr.coef_))
+        output_text.insert(tk.END, '偏置值：{}\n\n'.format(lr.intercept_))
 
         y_predict = std_y.inverse_transform(lr.predict(x_test))
         y_real = std_y.inverse_transform(y_test)
-        for i in range(50):
-            print('預測值：{}，真實值：{}'.format(y_predict[i], y_real[i]))
+
+        output_text.insert(tk.END, '部分預測值與真實值對比：\n')
+        # for i in range(min(50, len(y_predict))):
+        #     output_text.insert(tk.END, '預測值：{:.2f}，真實值：{:.2f}\n'.format(y_predict[i][0], y_real[i][0]))
+
+        y_last_row_predict = lr.predict(last_row_x.values.reshape(1, -1))[0][0]  # 提取单个预测值
+        y_last_row_predict = pd.Series(y_last_row_predict)
+
+        # output_text.insert(tk.END, '預測值：{:.2f}，真實值：{:.2f}\n'.format(y_last_row_predict, last_row_y))
+    
 
         merror = mean_squared_error(y_real, y_predict)
-        print('平均方差：{}'.format(merror))
+        output_text.insert(tk.END, '\n平均方差：{:.2f}\n'.format(merror))
+
             
 
     #(分類)邏輯回歸
@@ -204,6 +258,9 @@ class Window(tk.Tk):
         top_window.title("邏輯回歸")
         top_window.geometry("600x500")
 
+    # 创建文本框用于显示结果
+        output_text = tk.Text(top_window, height=20, width=70)
+        output_text.pack(pady=20)
 
         data =pd.read_csv('data.csv')
         tdf= pd.DataFrame()
@@ -221,7 +278,9 @@ class Window(tk.Tk):
         estimator = LogisticRegression()
         estimator.fit(x_train, y_train)
         score = estimator.score(x_test, y_test)
-        print("Logistic 準確率：{}".format(score))
+        # print("Logistic 準確率：{}".format(score))
+        output_text.insert(tk.END,"Logistic 準確率：{}".format(score))
+        
 
 
 def main():
