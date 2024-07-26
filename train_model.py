@@ -11,7 +11,7 @@ from sklearn.linear_model import LinearRegression
 def Decision_tree_Regressor(test_size,data,feature):
     
     tdf = pd.DataFrame()
-    tdf['Target'] = data['Close']
+    tdf['Target'] = data['CloseY']
 
     x = data[feature].values  # 排除第一列（日期）和最后两列（Target和Close）
     y = tdf['Target'].values  # 使用 'Target' 作为目标变量
@@ -33,7 +33,7 @@ def Decision_tree_Regressor(test_size,data,feature):
 
 def Linear_regression(test_size,data,feature):
     tdf = pd.DataFrame()
-    tdf['Target'] = data['Close']
+    tdf['Target'] = data['CloseY']
 
     x = data[feature].values  # 排除第一列（日期）和最后两列（Target和Close）
     y = tdf['Target'].values  # 使用 'Target' 作为目标变量
@@ -85,7 +85,7 @@ def Decision_tree_Classifier(test_size,data,feature):
 def Logisticregression(test_size,data,feature):
     tdf= pd.DataFrame()
 
-    tdf['Target'] = np.where(data['Close'].diff() > 0, 'Buy', 'Sell')
+    tdf['Target'] = np.where(data['CloseY'].diff() > 0, 'Buy', 'Sell')
 
     x = data[feature].values  # 假設需要排除第一列（日期）和最後兩列（Target和Close）
     y = tdf['Target'].values  # 使用 'Target' 作為目標變量

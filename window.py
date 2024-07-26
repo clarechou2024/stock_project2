@@ -298,7 +298,7 @@ class App(ThemedTk):
         feature_method = self.choose_function_combobox.get()
         features_corr = data.corr(method=feature_method)
 
-        target_corr = features_corr['Close'].drop(index=['Close'])
+        target_corr = features_corr['CloseY'].drop(index=['CloseY'])
 
         alpha = float(self.alpha_combobox.get())
         selected_features = target_corr[abs(target_corr) > alpha].sort_values(ascending=False)
@@ -347,7 +347,7 @@ class App(ThemedTk):
         df = data.iloc[:, :-1]
         target = data.iloc[:, -1]
 
-        n = 16
+        n = 17
         selected_method = event.widget.get()
         if selected_method == 'f_regression':
             chi = SelectKBest(f_regression, k=n)

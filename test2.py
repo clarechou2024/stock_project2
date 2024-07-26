@@ -18,7 +18,7 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import cross_val_score
 
 
-data =pd.read_csv('202006202312.csv')
+data =pd.read_csv('0.csv')
 
 def KNeighbors():
     tdf= pd.DataFrame()
@@ -276,7 +276,7 @@ def svr_and_pca():
 
 def svr_and_pca_with_cv():
     tdf = pd.DataFrame()
-    tdf['Target'] = data['Close']
+    tdf['Target'] = data['CloseY']
 
     x = data.iloc[:, 1:-1].values
     y = tdf['Target'].values
@@ -378,7 +378,7 @@ def svm():
 
 def pca_feature_selection():
     tdf = pd.DataFrame()
-    tdf['Target'] = data['Close']
+    tdf['Target'] = data['CloseY']
 
     x = data.iloc[:, 1:-1].values
     y = tdf['Target'].values
