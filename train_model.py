@@ -163,4 +163,11 @@ def Logisticregression(test_size,data,feature):
     # 计算 F1 分数
     f1 = f1_score(y_test, y_test_pred, average='weighted', labels=estimator.classes_)
     
-    return score,y_pred[0],f1
+    conf_matrix = confusion_matrix(y_test, y_test_pred, labels=estimator.classes_)
+    fig, ax = plt.subplots(figsize=(10, 7))
+    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Reds', xticklabels=estimator.classes_, yticklabels=estimator.classes_, ax=ax)
+    ax.set_xlabel('Predicted Label')
+    ax.set_ylabel('True Label')
+    ax.set_title('Confusion Matrix')
+
+    return score,y_pred[0],f1,fig
