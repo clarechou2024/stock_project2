@@ -415,34 +415,101 @@ class App(ThemedTk):
                 # 创建 FigureCanvasTkAgg 对象
                 canvas = FigureCanvasTkAgg(fig, master=self.result_frame)
                 canvas.draw()
+
+                # 获取图形的宽度和高度
+                fig_width, fig_height = fig.get_size_inches() * fig.get_dpi()
                 
                 # 将图形添加到 Tkinter 界面
-                canvas.get_tk_widget().grid(row=1, column=0, columnspan=2, padx=10, pady=10)
+                canvas_widget = canvas.get_tk_widget()
+                canvas_widget.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+                
+                # 设置 Frame 的自动调整
+                self.result_frame.columnconfigure(0, weight=1)
+                self.result_frame.rowconfigure(1, weight=1)
+
+                # 如果需要，可以设置 `canvas_widget` 的固定大小
+                canvas_widget.config(width=int(fig_width), height=int(fig_height))
+
 
         elif model=="決策樹(C)":
-            score,y_predict,f1=train_model.Decision_tree_Classifier(test_size=0.3,data=data,feature=feature)
+            score,y_predict,f1,fig=train_model.Decision_tree_Classifier(test_size=0.3,data=data,feature=feature)
 
             result_textbox.insert(tk.END, f"Decision_tree(C) 模型評估(f1): {f1}\n")
             result_textbox.insert(tk.END, f"Decision_tree(C) y_predict: {y_predict}\n")
             result_textbox.insert(tk.END, f"Decision_tree(C) 準確率: {score}\n")
             result_textbox.config(state='disabled')
+            if fig:
+                # 创建 FigureCanvasTkAgg 对象
+                canvas = FigureCanvasTkAgg(fig, master=self.result_frame)
+                canvas.draw()
+
+                # 获取图形的宽度和高度
+                fig_width, fig_height = fig.get_size_inches() * fig.get_dpi()
+                
+                # 将图形添加到 Tkinter 界面
+                canvas_widget = canvas.get_tk_widget()
+                canvas_widget.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+                
+                # 设置 Frame 的自动调整
+                self.result_frame.columnconfigure(0, weight=1)
+                self.result_frame.rowconfigure(1, weight=1)
+
+                # 如果需要，可以设置 `canvas_widget` 的固定大小
+                canvas_widget.config(width=int(fig_width), height=int(fig_height))
         
         elif model =="Logisticregression":
-            score,y_predict,f1=train_model.Logisticregression(test_size=0.3,data=data,feature=feature)
+            score,y_predict,f1,fig=train_model.Logisticregression(test_size=0.3,data=data,feature=feature)
 
             result_textbox.insert(tk.END, f"Logisticregression 模型評估(f1): {f1}\n")
             result_textbox.insert(tk.END, f"Logisticregression y_predict: {y_predict}\n")
             result_textbox.insert(tk.END, f"Decision_tree(C) 準確率: {score}\n")
             result_textbox.config(state='disabled')
+            if fig:
+                # 创建 FigureCanvasTkAgg 对象
+                canvas = FigureCanvasTkAgg(fig, master=self.result_frame)
+                canvas.draw()
+
+                # 获取图形的宽度和高度
+                fig_width, fig_height = fig.get_size_inches() * fig.get_dpi()
+                
+                # 将图形添加到 Tkinter 界面
+                canvas_widget = canvas.get_tk_widget()
+                canvas_widget.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+                
+                # 设置 Frame 的自动调整
+                self.result_frame.columnconfigure(0, weight=1)
+                self.result_frame.rowconfigure(1, weight=1)
+
+                # 如果需要，可以设置 `canvas_widget` 的固定大小
+                canvas_widget.config(width=int(fig_width), height=int(fig_height))
 
         elif model =="Linear_regression":
-            mse,r2,y_predict,tolerance_percentage,correct_within_tolerance=train_model.Linear_regression(test_size=0.3,data=data,feature=feature)
+            mse,r2,y_predict,tolerance_percentage,correct_within_tolerance,fig=train_model.Linear_regression(test_size=0.3,data=data,feature=feature)
 
             result_textbox.insert(tk.END, f"Linear_regression 均方誤差(mse): {mse}\n")
             result_textbox.insert(tk.END, f"Linear_regression R^2(r2): {r2}\n")
             result_textbox.insert(tk.END, f"Linear_regression y_predict: {y_predict}\n")
             result_textbox.insert(tk.END, f'在容忍度 {tolerance_percentage*100}% 範圍內的正確比率: {correct_within_tolerance:.2f}%')
             result_textbox.config(state='disabled')
+
+            if fig:
+                # 创建 FigureCanvasTkAgg 对象
+                canvas = FigureCanvasTkAgg(fig, master=self.result_frame)
+                canvas.draw()
+
+                # 获取图形的宽度和高度
+                fig_width, fig_height = fig.get_size_inches() * fig.get_dpi()
+                
+                # 将图形添加到 Tkinter 界面
+                canvas_widget = canvas.get_tk_widget()
+                canvas_widget.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+                
+                # 设置 Frame 的自动调整
+                self.result_frame.columnconfigure(0, weight=1)
+                self.result_frame.rowconfigure(1, weight=1)
+
+                # 如果需要，可以设置 `canvas_widget` 的固定大小
+                canvas_widget.config(width=int(fig_width), height=int(fig_height))
 
     #畫盒鬚圖
     def boxplot_features(self,selected_features):

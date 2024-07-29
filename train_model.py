@@ -2,11 +2,12 @@ from sklearn.tree import DecisionTreeRegressor,DecisionTreeClassifier
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, r2_score,accuracy_score,precision_score, recall_score, f1_score
+from sklearn.metrics import mean_squared_error, r2_score,accuracy_score,precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt #繪圖
+import seaborn as sns
 
 def Decision_tree_Regressor(test_size,data,feature):
     
@@ -87,7 +88,16 @@ def Linear_regression(test_size,data,feature):
     # 計算在容忍度範圍內的正確比率
     correct_within_tolerance = np.mean(absolute_errors <= tolerance_threshold)
 
-    return mse,r2,round(y_last_predict[0][0],4),tolerance_percentage,correct_within_tolerance
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(y_test, y_predict, color='blue', label='Predicted vs Actual')
+    ax.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--', label='45 Degree Line')
+    ax.set_xlabel('Actual Values')
+    ax.set_ylabel('Predicted Values')
+    ax.set_title('Scatter Plot of Predicted vs Actual Values')
+    ax.legend()
+    ax.grid(True)
+
+    return mse,r2,round(y_last_predict[0][0],4),tolerance_percentage,correct_within_tolerance,fig
 
 def Decision_tree_Classifier(test_size,data,feature):
     
@@ -115,7 +125,14 @@ def Decision_tree_Classifier(test_size,data,feature):
     # 计算 F1 分数
     f1 = f1_score(y_test, y_test_pred, average='weighted', labels=dec.classes_)
 
-    return score,y_pred[0],f1
+    conf_matrix = confusion_matrix(y_test, y_test_pred, labels=dec.classes_)
+    fig, ax = plt.subplots(figsize=(10, 7))
+    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Reds', xticklabels=dec.classes_, yticklabels=dec.classes_, ax=ax)
+    ax.set_xlabel('Predicted Label')
+    ax.set_ylabel('True Label')
+    ax.set_title('Confusion Matrix')
+
+    return score, y_pred[0], f1, fig
 
 def Logisticregression(test_size,data,feature):
     tdf= pd.DataFrame()
