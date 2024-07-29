@@ -15,9 +15,10 @@ from sklearn.metrics import classification_report
 from sklearn.svm import SVC
 from sklearn.svm import SVR
 from sklearn.decomposition import PCA
+from sklearn.model_selection import cross_val_score
 
 
-data =pd.read_csv('202006202312.csv')
+data =pd.read_csv('0.csv')
 
 def KNeighbors():
     tdf= pd.DataFrame()
@@ -129,6 +130,12 @@ def Linear_regression():
     merror = mean_squared_error(y_real, y_predict)
     print('平均方差：{}'.format(merror))
 
+    x_last_predict = x[-10].reshape(1, -1)
+    
+    y_last_predict = std_y.inverse_transform(lr.predict(std_x.transform(x_last_predict)))
+    print('預測值：', y_last_predict[0].round(4))
+    print(type(x_last_predict))
+
 def DR_Linear_regression():
     tdf= pd.DataFrame()
 
@@ -216,25 +223,134 @@ def svc():
 
 def svcandpca():
     tdf = pd.DataFrame()
-    tdf['Target'] = data['Close']
+    tdf['Target'] = np.where(data['Close'].diff() > 0, 'Buy', 'Sell')
 
-    f =['Open','High','Low','Adj Close','EMA12']
-    x = data[f].values  # 排除第一列（日期）和最后两列（Target和Close）
-    y = tdf['Target'].values  # 使用 'Target' 作为目标变量
+    features = ['Open', 'High', 'Low', 'Adj Close', 'EMA12']
+    x = data[features].values
+    y = tdf['Target'].values
 
-    x_train, x_test, y_train, y_test = train_test_split(
-    x, y, test_size=0.4,random_state=39830) #random_state=1 使資料分割固定
-    pca =PCA(svd_solver='randomized', n_components=5, whiten=True)
-    pca.fit(x, y)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.4, random_state=39830)
+
+    pca = PCA(svd_solver='randomized', n_components=5, whiten=True)
+    pca.fit(x_train)
     x_train_pca = pca.transform(x_train)
     x_test_pca = pca.transform(x_test)
+
     clf = SVC(kernel='rbf', C=100, gamma='auto')
-    clf = clf.fit(x_train_pca, y_train)
-    predict = clf.predict(x_test_pca)
+    clf.fit(x_train_pca, y_train)
+
     score = clf.score(x_test_pca, y_test)
     print("準確率：{}".format(score))
+
+    predictions = clf.predict(x_test_pca)
     for i in range(20):
-        print('預測值：{}，真實值：{}'.format(predict[i],y_test[i]))
+        print('預測值：{}，真實值：{}'.format(predictions[i], y_test[i]))
+
+def svr_and_pca():
+    tdf = pd.DataFrame()
+    tdf['Target'] = data['Close']
+
+    features = ['Open', 'High', 'Low', 'Adj Close', 'EMA12']
+    x = data[features].values
+    y = tdf['Target'].values
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.4, random_state=39830)
+
+    pca = PCA(svd_solver='randomized', n_components=5, whiten=True)
+    pca.fit(x_train)
+    print(pca.components_)
+
+    x_train_pca = pca.transform(x_train)
+    x_test_pca = pca.transform(x_test)
+
+    svr = SVR(kernel='rbf', C=100, gamma='auto')
+    svr.fit(x_train_pca, y_train)
+
+    score = svr.score(x_test_pca, y_test)
+    print("R-squared score:", score)
+
+    predictions = svr.predict(x_test_pca)
+    # for i in range(20):
+    #     print('Predicted value: {}, True value: {}'.format(predictions[i], y_test[i]))
+
+    merror = mean_squared_error(y_test, predictions)
+    print('平均方差：{}'.format(merror))
+
+def svr_and_pca_with_cv():
+    tdf = pd.DataFrame()
+    tdf['Target'] = data['CloseY']
+
+    x = data.iloc[:, 1:-1].values
+    y = tdf['Target'].values
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=39830)
+
+    best_n_components = 0
+    best_score = -float('inf')
+    best_predictions = None
+    best_top_features = None
+
+    for i in range(1, x.shape[1] + 1):
+        pca = PCA(svd_solver='randomized', n_components=i, whiten=True)
+        pca.fit(x_train)
+        
+        x_train_pca = pca.transform(x_train)
+        x_test_pca = pca.transform(x_test)
+
+        svr = SVR(kernel='rbf', C=100, gamma='auto')
+        
+        # 使用交叉驗證來評估模型性能
+        scores = cross_val_score(svr, x_train_pca, y_train, cv=5, scoring='r2')
+        score = np.mean(scores)
+        
+        print(f"For {i} components, Cross-validated R-squared score: {score}")
+
+        if score > best_score:
+            best_score = score
+            best_n_components = i
+            
+            # 在找到最佳成分數後，使用整個訓練集重新訓練模型
+            svr.fit(x_train_pca, y_train)
+            best_predictions = svr.predict(x_test_pca)
+
+            # Get the top features for the best component
+            best_pca = PCA(svd_solver='randomized', n_components=i, whiten=True)
+            best_pca.fit(x_train)
+            best_components = best_pca.components_
+            top_features_indices = np.argsort(np.abs(best_components[-1]))[::-1][:best_n_components]
+            
+            # Map indices to original feature names
+            best_top_features = data.columns[1:-1][top_features_indices].tolist()
+    
+    print(f"Best Cross-validated R-squared score: {best_score} with {best_n_components} components")
+    print(f"Top features: {best_top_features}")
+
+    # Calculate mean squared error for best predictions
+    merror = mean_squared_error(y_test, best_predictions)
+    print('平均方差：{}'.format(merror))
+
+    # Retrain SVR on full training set with best PCA components
+    svr = SVR(kernel='rbf', C=100, gamma='auto')
+    pca = PCA(svd_solver='randomized', n_components=best_n_components, whiten=True)
+    x_train_pca = pca.fit_transform(x_train)
+    svr.fit(x_train_pca, y_train)
+
+    # Transform test data for prediction
+    x_test_pca = pca.transform(x_test)
+    y_pred = svr.predict(x_test_pca)
+
+    # Plotting PCA components with SVR regression line
+    plt.figure(figsize=(8, 6))
+    scatter = plt.scatter(x_train_pca[:, 0], x_train_pca[:, 1], c=y_train, cmap='viridis', label='Data points')
+    plt.title('Scatter Plot of PCA Components')
+    plt.xlabel('Principal Component 1')
+    plt.ylabel('Principal Component 2')
+
+    plt.colorbar(scatter, label='Target')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
 
 def svm():
     tdf = pd.DataFrame()
@@ -261,16 +377,56 @@ def svm():
         print('預測值：{}，真實值：{}'.format(y_predict[i][0], y_real[i][0]))
     merror = mean_squared_error(y_real, y_predict)
     print('平均方差：{}'.format(merror))
+
+def pca_feature_selection():
+    tdf = pd.DataFrame()
+    tdf['Target'] = data['CloseY']
+
+    x = data.iloc[:, 1:-1].values
+    y = tdf['Target'].values
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=39830)
+
+    best_n_components = 0
+    best_score = -float('inf')
+    best_top_features = None
+
+    for i in range(1, x.shape[1] + 1):
+        pca = PCA(svd_solver='randomized', n_components=i, whiten=True)
+        pca.fit(x_train)
+        
+        # Get the top features for the current number of components
+        components = pca.components_
+        top_features_indices = np.argsort(np.abs(components[-1]))[::-1][:i]
+        top_features = data.columns[1:-1][top_features_indices].tolist()
+        
+        # Calculate some score metric (e.g., explained variance ratio)
+        score = np.sum(pca.explained_variance_ratio_[:i])
+        
+        print(f"For {i} components, Explained variance ratio: {score}")
+
+        if score > best_score:
+            best_score = score
+            best_n_components = i
+            best_top_features = top_features
+    
+    print(f"Best Explained variance ratio: {best_score} with {best_n_components} components")
+    print(f"Top features: {best_top_features}")
+
+    return best_top_features
     
 # KNeighbors()
 # GridSearch()
 # Decision_tree(39830)
 # Linear_regression()
+pca_feature_selection()
 # DR_Linear_regression()
 # Logisticregression()
 # classificationreport()
 # svc()
 # svcandpca()
+# svr_and_pca()
+# svr_and_pca_with_cv()
 # svm()
 
 # best_score = -1
