@@ -3,12 +3,12 @@ import numpy as np
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 import matplotlib.pyplot as plt
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeRegressor,DecisionTreeClassifier
 from sklearn import tree
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score,precision_score, recall_score, f1_score,confusion_matrix
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler,LabelEncoder
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score,mean_absolute_error
 from sklearn.linear_model import SGDRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
@@ -16,6 +16,12 @@ from sklearn.svm import SVC
 from sklearn.svm import SVR
 from sklearn.decomposition import PCA
 from sklearn.model_selection import cross_val_score
+import seaborn as sns
+
+from sklearn.linear_model import Lasso
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectFromModel
+
 
 
 data =pd.read_csv('0.csv')
@@ -249,13 +255,19 @@ def svr_and_pca():
     tdf['Target'] = data['Close']
 
     features = ['Open', 'High', 'Low', 'Adj Close', 'EMA12']
+    # x = data.iloc[:, 1:-1].values
     x = data[features].values
+    # feature_data = data.iloc[:, 1:-1]
+    feature_data=data[features]
+    feature_names = feature_data.columns
     y = tdf['Target'].values
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.4, random_state=39830)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=39830)
 
-    pca = PCA(svd_solver='randomized', n_components=5, whiten=True)
+    pca = PCA(svd_solver='randomized', n_components=4, whiten=True)
     pca.fit(x_train)
+    
+    print('主成分:')
     print(pca.components_)
 
     x_train_pca = pca.transform(x_train)
@@ -268,11 +280,54 @@ def svr_and_pca():
     print("R-squared score:", score)
 
     predictions = svr.predict(x_test_pca)
-    # for i in range(20):
-    #     print('Predicted value: {}, True value: {}'.format(predictions[i], y_test[i]))
 
     merror = mean_squared_error(y_test, predictions)
     print('平均方差：{}'.format(merror))
+
+    # 计算均方根误差
+    rmse = np.sqrt(merror)
+    print('均方根误差 (RMSE): {}'.format(rmse))
+
+    # 计算平均绝对误差
+    mae = mean_absolute_error(y_test, predictions)
+    print('平均绝对误差 (MAE): {}'.format(mae))
+
+    # 计算 R-squared score 使用 r2_score
+    r2 = r2_score(y_test, predictions)
+    print("R-squared score (使用 r2_score):", r2)
+
+    tolerance_percentage = 0.03  # 5%
+
+    # 计算容忍度阈值
+    tolerance_threshold = tolerance_percentage * np.abs(y_test)
+
+    # 计算绝对误差
+    absolute_errors = np.abs(predictions - y_test)
+
+    # 计算在容忍度范围内的正确比率
+    correct_within_tolerance = np.mean(absolute_errors <= tolerance_threshold)
+
+    # 输出正确比率
+    print(f'在容忍度 {tolerance_percentage*100}% 范围内的正确比率: {correct_within_tolerance:.2f}%')
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(y_test, predictions, color='blue', label='Predicted vs Actual')
+    plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--', label='45 Degree Line')
+    plt.xlabel('Actual Values')
+    plt.ylabel('Predicted Values')
+    plt.title('Scatter Plot of Predicted vs Actual Values')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    # 建立主成分與特徵的 DataFrame
+    components_df = pd.DataFrame(pca.components_, columns=feature_names, index=[f'主成分 {i+1}' for i in range(pca.n_components_)])
+    
+    # 顯示每個主成分的最重要特徵
+    for i in range(pca.n_components_):  # PCA 中的主成分數量
+        print(f'\n主成分 {i+1} 的最重要特徵:')
+        top_features = components_df.loc[f'主成分 {i+1}'].abs().sort_values(ascending=False)
+        print(top_features.head(5))  # 顯示影響最大的兩個特徵
 
 def svr_and_pca_with_cv():
     tdf = pd.DataFrame()
@@ -378,8 +433,10 @@ def svm():
 
 def pca_feature_selection():
     tdf = pd.DataFrame()
-    tdf['Target'] = data['CloseY']
+    tdf['Target'] = data['Close']
 
+    # features = ['Open', 'High', 'Low', 'Adj Close', 'EMA12']
+    # x = data[features].values
     x = data.iloc[:, 1:-1].values
     y = tdf['Target'].values
 
@@ -388,9 +445,10 @@ def pca_feature_selection():
     best_n_components = 0
     best_score = -float('inf')
     best_top_features = None
+    best_pca = None
 
     for i in range(1, x.shape[1] + 1):
-        pca = PCA(svd_solver='randomized', n_components=i, whiten=True)
+        pca = PCA(svd_solver='full', n_components=i, whiten=True)
         pca.fit(x_train)
         
         # Get the top features for the current number of components
@@ -407,25 +465,100 @@ def pca_feature_selection():
             best_score = score
             best_n_components = i
             best_top_features = top_features
+            best_pca=pca
     
     print(f"Best Explained variance ratio: {best_score} with {best_n_components} components")
     print(f"Top features: {best_top_features}")
 
-    return best_top_features
+    return best_top_features,best_pca
+
+def svr():
+    tdf = pd.DataFrame()
+    tdf['Target'] = data['Close']
+
+    # features = ['Open', 'High', 'Low', 'Adj Close', 'EMA12']
+    # x = data[features].values
+    x = data.iloc[:, 1:-1].values
+    y = tdf['Target'].values
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=39830)
+
+
+    features,pca=pca_feature_selection()
+    x_train_pca = pca.transform(x_train)
+    x_test_pca = pca.transform(x_test)
+
+    svr = SVR(kernel='rbf', C=100, gamma='scale')
+    svr.fit(x_train_pca, y_train)
+
+    score = svr.score(x_test_pca, y_test)
+    print("R-squared score:", score)
+
+    predictions = svr.predict(x_test_pca)
+    # for i in range(20):
+    #     print('Predicted value: {}, True value: {}'.format(predictions[i], y_test[i]))
+
+    merror = mean_squared_error(y_test, predictions)
+    print('平均方差：{}'.format(merror))
+
+def Decision_tree_Classifier():
     
+    tdf = pd.DataFrame()
+    tdf['Target'] = np.where(data['Close'].shift(-1) > data['Close'], 'Buy', 'Sell')
+    feature = ['Open', 'High', 'Low', 'Adj Close', 'EMA12']
+    x = data[feature].values  # 排除第一列（日期）和最后两列（Target和Close）
+    y = tdf['Target'].values  # 使用 'Target' 作为目标变量
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.4, random_state=39830)
+
+    dec = DecisionTreeClassifier(random_state=39830)
+    dec.fit(x_train, y_train)
+
+    x_last_predict = data.iloc[-1][feature].values.reshape(1, -1)
+    y_model_pred = dec.predict(x_last_predict)
+    score = dec.score(x_test, y_test)
+    y_pred=dec.predict(x_test)
+    accuracy = accuracy_score(y_test, y_pred)
+
+    conf_matrix = confusion_matrix(y_test, y_pred, labels=dec.classes_)
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Reds', xticklabels=dec.classes_, yticklabels=dec.classes_)
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
+    plt.title('Confusion Matrix')
+    plt.show()
+
+    # 计算准确率
+    accuracy = accuracy_score(y_test, y_pred)
+    # 计算精确率
+    precision = precision_score(y_test, y_pred, average='weighted', labels=dec.classes_)
+    # 计算召回率
+    recall = recall_score(y_test, y_pred, average='weighted', labels=dec.classes_)
+    # 计算 F1 分数
+    f1 = f1_score(y_test, y_pred, average='weighted', labels=dec.classes_)
+
+    print(score)
+    print(accuracy)
+
+    return score,y_model_pred[0],f1
+
+# pca_feature_selection()
 # KNeighbors()
 # GridSearch()
 # Decision_tree(39830)
 # Linear_regression()
-pca_feature_selection()
+# pca_feature_selection()
 # DR_Linear_regression()
 # Logisticregression()
 # classificationreport()
 # svc()
 # svcandpca()
-# svr_and_pca()
+svr_and_pca()
 # svr_and_pca_with_cv()
 # svm()
+# svr()
+# pca_feature_analysis()
+# Decision_tree_Classifier()
 
 # best_score = -1
 # best_random_state = None
