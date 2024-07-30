@@ -1,17 +1,18 @@
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree import DecisionTreeClassifier 
+from sklearn.tree import DecisionTreeRegressor,DecisionTreeClassifier
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score,accuracy_score,precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt #繪圖
+import seaborn as sns
 
 def Decision_tree_Regressor(test_size,data,feature):
     
     tdf = pd.DataFrame()
-    tdf['Target'] = data['CloseY']
+    tdf['Target'] = data['Close']
 
     x = data[feature].values  # 排除第一列（日期）和最后两列（Target和Close）
     y = tdf['Target'].values  # 使用 'Target' 作为目标变量
@@ -29,11 +30,29 @@ def Decision_tree_Regressor(test_size,data,feature):
     x_last_predict = data.iloc[-1][feature].values.reshape(1, -1)
     y_last_predict = dec.predict((x_last_predict))
 
-    return mse,r2,round(y_last_predict[0],4)
+    #誤差 1%
+    tolerance_percentage = 0.01 
+    # 計算容忍度閾值
+    tolerance_threshold = tolerance_percentage * np.abs(y_test)
+    # 計算絕對誤差
+    absolute_errors = np.abs(y_pred - y_test)
+    # 計算在容忍度範圍內的正確比率
+    correct_within_tolerance = np.mean(absolute_errors <= tolerance_threshold)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(y_test, y_pred, color='blue', label='Predicted vs Actual')
+    ax.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--', label='45 Degree Line')
+    ax.set_xlabel('Actual Values')
+    ax.set_ylabel('Predicted Values')
+    ax.set_title('Scatter Plot of Predicted vs Actual Values')
+    ax.legend()
+    ax.grid(True)
+
+    return mse,r2,round(y_last_predict[0],4),tolerance_percentage,correct_within_tolerance,fig
 
 def Linear_regression(test_size,data,feature):
     tdf = pd.DataFrame()
-    tdf['Target'] = data['CloseY']
+    tdf['Target'] = data['Close']
 
     x = data[feature].values  # 排除第一列（日期）和最后两列（Target和Close）
     y = tdf['Target'].values  # 使用 'Target' 作为目标变量
@@ -60,8 +79,25 @@ def Linear_regression(test_size,data,feature):
     x_last_predict = data.iloc[-1][feature].values.reshape(1, -1)
     y_last_predict = lr.predict((x_last_predict))
 
+    #誤差 1%
+    tolerance_percentage = 0.01 
+    # 計算容忍度閾值
+    tolerance_threshold = tolerance_percentage * np.abs(y_test)
+    # 計算絕對誤差
+    absolute_errors = np.abs(y_predict - y_test)
+    # 計算在容忍度範圍內的正確比率
+    correct_within_tolerance = np.mean(absolute_errors <= tolerance_threshold)
 
-    return mse,r2,round(y_last_predict[0][0],4)
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(y_test, y_predict, color='blue', label='Predicted vs Actual')
+    ax.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--', label='45 Degree Line')
+    ax.set_xlabel('Actual Values')
+    ax.set_ylabel('Predicted Values')
+    ax.set_title('Scatter Plot of Predicted vs Actual Values')
+    ax.legend()
+    ax.grid(True)
+
+    return mse,r2,round(y_last_predict[0][0],4),tolerance_percentage,correct_within_tolerance,fig
 
 def Decision_tree_Classifier(test_size,data,feature):
     
@@ -78,14 +114,30 @@ def Decision_tree_Classifier(test_size,data,feature):
 
     x_last_predict = data.iloc[-1][feature].values.reshape(1, -1)
     y_pred = dec.predict(x_last_predict)
+    y_test_pred=dec.predict(x_test)
     score = dec.score(x_test, y_test)
+    # 计算准确率
+    accuracy = accuracy_score(y_test, y_test_pred)
+    # 计算精确率
+    precision = precision_score(y_test, y_test_pred, average='weighted', labels=dec.classes_)
+    # 计算召回率
+    recall = recall_score(y_test, y_test_pred, average='weighted', labels=dec.classes_)
+    # 计算 F1 分数
+    f1 = f1_score(y_test, y_test_pred, average='weighted', labels=dec.classes_)
 
-    return score,y_pred[0]
+    conf_matrix = confusion_matrix(y_test, y_test_pred, labels=dec.classes_)
+    fig, ax = plt.subplots(figsize=(10, 7))
+    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Reds', xticklabels=dec.classes_, yticklabels=dec.classes_, ax=ax)
+    ax.set_xlabel('Predicted Label')
+    ax.set_ylabel('True Label')
+    ax.set_title('Confusion Matrix')
+
+    return score, y_pred[0], f1, fig
 
 def Logisticregression(test_size,data,feature):
     tdf= pd.DataFrame()
 
-    tdf['Target'] = np.where(data['CloseY'].diff() > 0, 'Buy', 'Sell')
+    tdf['Target'] = np.where(data['Close'].diff() > 0, 'Buy', 'Sell')
 
     x = data[feature].values  # 假設需要排除第一列（日期）和最後兩列（Target和Close）
     y = tdf['Target'].values  # 使用 'Target' 作為目標變量
@@ -97,9 +149,25 @@ def Logisticregression(test_size,data,feature):
     x_test = transfer.transform(x_test)
     estimator = LogisticRegression()
     estimator.fit(x_train, y_train)
+    y_test_pred=estimator.predict(x_test)
     score = estimator.score(x_test, y_test)
 
     x_last_predict = data.iloc[-1][feature].values.reshape(1, -1)
     y_pred = estimator.predict(x_last_predict)
+    # 计算准确率
+    accuracy = accuracy_score(y_test, y_test_pred)
+    # 计算精确率
+    precision = precision_score(y_test, y_test_pred, average='weighted', labels=estimator.classes_)
+    # 计算召回率
+    recall = recall_score(y_test, y_test_pred, average='weighted', labels=estimator.classes_)
+    # 计算 F1 分数
+    f1 = f1_score(y_test, y_test_pred, average='weighted', labels=estimator.classes_)
     
-    return score,y_pred[0]
+    conf_matrix = confusion_matrix(y_test, y_test_pred, labels=estimator.classes_)
+    fig, ax = plt.subplots(figsize=(10, 7))
+    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Reds', xticklabels=estimator.classes_, yticklabels=estimator.classes_, ax=ax)
+    ax.set_xlabel('Predicted Label')
+    ax.set_ylabel('True Label')
+    ax.set_title('Confusion Matrix')
+
+    return score,y_pred[0],f1,fig
