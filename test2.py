@@ -24,7 +24,7 @@ from sklearn.feature_selection import SelectFromModel
 
 
 
-data =pd.read_csv('0.csv')
+data =pd.read_csv('1.csv')
 
 def KNeighbors():
     tdf= pd.DataFrame()
@@ -253,6 +253,7 @@ def svcandpca():
         print('預測值：{}，真實值：{}'.format(predictions[i], y_test[i]))
 
 def svr_and_pca():
+    print(data)
     tdf = pd.DataFrame()
     tdf['Target'] = data['Close']
 
@@ -266,7 +267,7 @@ def svr_and_pca():
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=39830)
 
-    pca = PCA(svd_solver='randomized', n_components=4, whiten=True)
+    pca = PCA(svd_solver='randomized', n_components=5, whiten=True)
     pca.fit(x_train)
     
     print('主成分:')
@@ -438,8 +439,9 @@ def pca_feature_selection():
     tdf['Target'] = data['Close']
 
     # features = ['Open', 'High', 'Low', 'Adj Close', 'EMA12']
-    # x = data[features].values
-    x = data.iloc[:, 1:-1].values
+    features=data.columns[1:-1]
+    x = data[features].values
+    
     y = tdf['Target'].values
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=39830)
@@ -449,44 +451,50 @@ def pca_feature_selection():
     best_top_features = None
     best_pca = None
 
+    print("Feature matrix (x):")
+    print(x)
+    
     for i in range(1, x.shape[1] + 1):
-        pca = PCA(svd_solver='full', n_components=i, whiten=True)
+        pca = PCA(n_components=i, whiten=True)
         pca.fit(x_train)
-        
-        # Get the top features for the current number of components
-        components = pca.components_
-        top_features_indices = np.argsort(np.abs(components[-1]))[::-1][:i]
-        top_features = data.columns[1:-1][top_features_indices].tolist()
         
         # Calculate some score metric (e.g., explained variance ratio)
         score = np.sum(pca.explained_variance_ratio_[:i])
         
+        # Get the top features for the current number of components
+        # Summarize the loadings of the components
+        components = pca.components_
+        feature_loadings = np.abs(components).mean(axis=0)
+        top_features_indices = np.argsort(feature_loadings)[::-1][:i]
+        top_features = [features[idx] for idx in top_features_indices]
+        
         print(f"For {i} components, Explained variance ratio: {score}")
+        print(f"Top features for {i} components: {top_features}")
 
         if score > best_score:
             best_score = score
             best_n_components = i
             best_top_features = top_features
-            best_pca=pca
+            best_pca = pca
     
     print(f"Best Explained variance ratio: {best_score} with {best_n_components} components")
     print(f"Top features: {best_top_features}")
 
-    return best_top_features,best_pca
+    return best_top_features, best_pca
 
 def svr():
     tdf = pd.DataFrame()
     tdf['Target'] = data['Close']
 
+    features,pca=pca_feature_selection()
+
     # features = ['Open', 'High', 'Low', 'Adj Close', 'EMA12']
-    # x = data[features].values
-    x = data.iloc[:, 1:-1].values
+    x = data[features].values
+    # x = data.iloc[:, 1:-1].values
     y = tdf['Target'].values
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=39830)
 
-
-    features,pca=pca_feature_selection()
     x_train_pca = pca.transform(x_train)
     x_test_pca = pca.transform(x_test)
 
@@ -502,6 +510,69 @@ def svr():
 
     merror = mean_squared_error(y_test, predictions)
     print('平均方差：{}'.format(merror))
+
+def svr_and_pca2():
+    print(data)
+    tdf = pd.DataFrame()
+    tdf['Target'] = data['Close']
+
+    # features = ['Open', 'High', 'Low', 'Adj Close', 'EMA12']
+    features=['Low', 'Open', 'High', 'EMA26', 'Adj Close', 'rsi', 'Signal_Line', 'upperband', 'lowerband', 'MACD', 'EMA12']
+    # x = data.iloc[:, 1:-1].values
+    x = data[features].values
+    # feature_data = data.iloc[:, 1:-1]
+    feature_data=data[features]
+    feature_names = feature_data.columns
+    y = tdf['Target'].values
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=39830)
+
+    pca = PCA(svd_solver='randomized', n_components=3, whiten=True)
+    pca.fit(x_train)
+    
+    print('主成分:')
+    print(pca.components_)
+
+    x_train_pca = pca.transform(x_train)
+    x_test_pca = pca.transform(x_test)
+
+    svr = SVR(kernel='rbf', C=100, gamma='auto')
+    svr.fit(x_train_pca, y_train)
+
+    score = svr.score(x_test_pca, y_test)
+    print("R-squared score:", score)
+
+    predictions = svr.predict(x_test_pca)
+
+    merror = mean_squared_error(y_test, predictions)
+    print('平均方差：{}'.format(merror))
+
+    # 计算均方根误差
+    rmse = np.sqrt(merror)
+    print('均方根误差 (RMSE): {}'.format(rmse))
+
+    # 计算平均绝对误差
+    mae = mean_absolute_error(y_test, predictions)
+    print('平均绝对误差 (MAE): {}'.format(mae))
+
+    # 计算 R-squared score 使用 r2_score
+    r2 = r2_score(y_test, predictions)
+    print("R-squared score (使用 r2_score):", r2)
+
+    tolerance_percentage = 0.01  # 5%
+
+    # 计算容忍度阈值
+    tolerance_threshold = tolerance_percentage * np.abs(y_test)
+
+    # 计算绝对误差
+    absolute_errors = np.abs(predictions - y_test)
+
+    # 计算在容忍度范围内的正确比率
+    correct_within_tolerance = np.mean(absolute_errors <= tolerance_threshold)
+
+    # 输出正确比率
+    print(f'在容忍度 {tolerance_percentage*100}% 范围内的正确比率: {correct_within_tolerance:.2f}%')
+
 
 def Decision_tree_Classifier():
     
@@ -555,7 +626,7 @@ def Decision_tree_Classifier():
 # classificationreport()
 # svc()
 # svcandpca()
-svr_and_pca()
+svr_and_pca2()
 # svr_and_pca_with_cv()
 # svm()
 # svr()
